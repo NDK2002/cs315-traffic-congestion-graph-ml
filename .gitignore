@@ -26,3 +26,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+
+# SHAP smoke-test output ([D2])
+03_models_evaluation/_smoke_output/
