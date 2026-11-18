@@ -1,6 +1,6 @@
 # DATA CONTRACT & TỪ ĐIỂN ĐẶC TRƯNG (`FEATURE DICTIONARY`) — `[K1]`
 
-> **Phụ trách:** Nguyễn Duy Khang (`26410055`) · **Trạng thái:** Bản nháp v0.1 (16/11/2026) — chờ Trung xác nhận tên cột thời tiết/triều (Mục VII)
+> **Phụ trách:** Nguyễn Duy Khang (`26410055`) · **Trạng thái:** Bản nháp v0.1 (16/11/2026) — Trung đã chốt tên cột thời tiết và đối chiếu ngưỡng triều ngày 18/11/2026
 > **Người dùng tài liệu:** Trung (`[T2]` sinh mock, `[T3]` mock ML pipeline) · Khang (`[K2]` Feature Selection) · Duy (`[D2]` SHAP trên tên biến gốc)
 > **Nguồn đầu vào:** [`01_data_sample/nodes.csv`](../01_data_sample/nodes.csv), [`01_data_sample/edges.csv`](../01_data_sample/edges.csv) (`[H3]`) · `open_meteo_sample.csv`, `phu_an_tide_reference.csv` (`[T1]`) · Nội dung 2 trong [Đề cương](../De_Cuong_Chi_Tiet_Do_An_May_Hoc_Nang_Cao.md#L126-L129)
 
@@ -118,7 +118,7 @@ Cột **Nhánh lọc** cho biết đặc trưng đi vào nhánh nào của pipel
 | Cột | Kiểu | Giá trị | Ngưỡng | Nhánh lọc |
 | :--- | :--- | :--- | :--- | :---: |
 | `rain_level` | int | `0–4` | `0`: `< 0.1` · `1`: `0.1–2.5` · `2`: `2.5–10` · `3`: `10–30` · `4`: `> 30 mm/h` (**kịch bản ngập**) | ORD |
-| `tide_alert` | int | `0–3` | `0`: `< BĐ1` · `1`: `≥ BĐ1` · `2`: `≥ BĐ2` · `3`: `≥ BĐ3` (báo động triều trạm Phú An, dự kiến `1.50 / 1.60 / 1.70 m`, **cần Trung xác minh**) | ORD |
+| `tide_alert` | int | `0–3` | `0`: `< BĐ1` · `1`: `≥ BĐ1` · `2`: `≥ BĐ2` · `3`: `≥ BĐ3` (bản tin Đài KTTV Nam Bộ dùng các ngưỡng tham chiếu `1.40 / 1.50 / 1.60 m`; Trung đã đối chiếu bản tin triều tháng 11/2026) | ORD |
 
 ### 6. Thuộc tính tĩnh của nút (từ `nodes.csv`, `edges.csv`; không đổi theo thời gian)
 
@@ -140,7 +140,7 @@ Cột **Nhánh lọc** cho biết đặc trưng đi vào nhánh nào của pipel
 
 | Nhánh | Cột | Mã hóa | Kỹ thuật lọc | Ngưỡng |
 | :--- | :--- | :--- | :--- | :--- |
-| **SỐ** | 20 cột đánh dấu SỐ | `MinMaxScaler` (chỉ để lọc phương sai) | `VarianceThreshold` | `0.01` trên dữ liệu đã MinMax |
+| **SỐ** | 22 cột đánh dấu SỐ | `MinMaxScaler` (chỉ để lọc phương sai) | `VarianceThreshold` | `0.01` trên dữ liệu đã MinMax |
 | | | — | `Pearson r` **chỉ để tham khảo**: (a) tương quan với từng nhãn; (b) cặp đặc trưng có `\|r\| ≥ 0.9` được gắn cờ dư thừa | **Không lọc cứng** (xem Mục VII.3) |
 | **ORD** | `time_slot`, `rain_level`, `tide_alert` | Đã là số nguyên có thứ tự (`OrdinalEncoder` với `categories` cố định) | $\chi^2$ với từng nhãn | Giữ nếu $\chi^2 > 5.99$ ($\alpha = 0.05$, $df = 3 - 1 = 2$) |
 | **NOM** | `road_type`, `is_weekend`, `has_twoway` | `OneHotEncoder(handle_unknown="ignore", drop="if_binary")` | $\chi^2$ với từng nhãn, tính trên từng cột dummy | Giữ nếu $\chi^2 > 5.99$ |
@@ -210,7 +210,7 @@ df = df.sort_values(["timestamp", "node_id"]).reset_index(drop=True)
 | # | Nội dung | Người chốt | Đề xuất hiện tại |
 | :---: | :--- | :--- | :--- |
 | 1 | Tên cột và mốc thời gian trong `open_meteo_sample.csv` (`time`, `precipitation`, `temperature_2m`, `relative_humidity_2m`?) | **Trung** (`[T1]`) | Giữ đúng tên của API Open-Meteo, đổi tên khi ghép (Mục VI) |
-| 2 | Đơn vị và mốc chuẩn của `tide_level`; ngưỡng báo động BĐ1/BĐ2/BĐ3 trạm Phú An | **Trung** (`[T1]`) | Mét; `1.50 / 1.60 / 1.70 m` (cần đối chiếu với nguồn chính thức) |
+| 2 | Đơn vị và mốc chuẩn của `tide_level`; ngưỡng báo động BĐ1/BĐ2/BĐ3 trạm Phú An | **Trung** (`[T1]`) | Mét; bản tin Đài KTTV Nam Bộ tháng 11/2026 nêu `1.40 / 1.50 / 1.60 m` ([bản tin số 307/2026](https://www.phongchonglutbaotphcm.gov.vn/phocadownload/2026/11-2026/HCMC_TVHN_20261103.pdf)). Mực nước trong tệp nguồn là dự báo cực trị, không phải số đo. |
 | 3 | **Mâu thuẫn quy tắc Pearson:** [Đề cương dòng 128](../De_Cuong_Chi_Tiet_Do_An_May_Hoc_Nang_Cao.md#L128) ghi *"lọc các biến `\|r\| ≥ 0.5`"*, còn [Kế hoạch Tuần 4](../Ke_Hoach_Thuc_Hien_Tuan_4.md) ghi *"chỉ tham khảo, không lọc cứng"* | **Cả nhóm** (`[H5]`) | Theo Kế hoạch Tuần 4. Pearson chỉ đo quan hệ **tuyến tính**, trong khi tác động của mưa và triều là **phi tuyến** (theo chính Đề cương). Lọc cứng có thể loại mất `rain_mm_h` và `tide_level_m`, là hai biến trung tâm của đề tài và của phần giải thích SHAP. Báo cáo sẽ trình bày bảng Pearson như một phân tích, không dùng làm bộ lọc |
 | 4 | Ngưỡng nhãn `0.6 / 0.3` và `free_flow_kmh` mỗi nút trong mock | **Trung** + **Khang** | Như Mục III; điều chỉnh nếu tỉ lệ lớp `2` lệch khỏi khoảng `5–15%` |
 | 5 | Quy tắc lấy `road_type` cho nút có nhiều cấp đường | **Hôn** (`[H3]`) | Lấy cấp cao nhất (Mục IV.6) |
