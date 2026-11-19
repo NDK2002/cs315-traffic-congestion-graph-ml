@@ -6,7 +6,7 @@
   * `fetch_open_meteo_sample.py` $\rightarrow$ `open_meteo_sample.csv` (`[T1]`, hourly historical sample, local `UTC+7`)
   * `phu_an_tide_reference.csv` (`[T1]`, published high/low-water forecast extrema with source bulletin and issue date)
   * `build_mock_hang_xanh_dataset.py` $\rightarrow$ `mock_hang_xanh_traffic_weather.csv` (`[T2]`, deterministic 15-minute scenario data)
-  * `build_gis_check_map.py` $\rightarrow$ `hang_xanh_gis_check.html` (`[D1]`)
+  * `build_gis_check_map.py` $\rightarrow$ `hang_xanh_gis_check.html` + `gis_check_notes.md` (`[D1]`)
   * Bộ dữ liệu sạch Tuần 5 (nhánh đối chứng `METR-LA` & kịch bản Hàng Xanh)
 
 ## Dữ liệu của Phạm Thành Trung (`[T1]`, `[T2]`)

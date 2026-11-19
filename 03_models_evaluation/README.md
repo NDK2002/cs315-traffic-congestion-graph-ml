@@ -2,11 +2,11 @@
 
 * **Phụ trách chính:** Phạm Thành Trung (`[T3]`), Vũ Văn Duy (`[D2]`)
 * **Sản phẩm dự kiến:**
-* `mock_ml_pipeline.py` (`[T3]`): chia `TimeSeriesSplit` theo `unique timestamp`, purge theo horizon, baseline `RandomForest`/`LightGBM` với `class_weight='balanced'`, đo `Recall`/`Precision`/`F1` lớp `2`, `Macro-F1`, OvR Average Precision (PR-AUC) & `Confusion Matrix`
-  * `results/mock_cv_fold_metrics.csv`, `mock_cv_summary.csv`, `mock_cv_confusion_matrices.json`: kết quả đánh giá mock theo fold, nhãn `y_t15`, `y_t30`, `y_t60`
-  * `results/*_feature_names.json`: danh sách đặc trưng sau mã hóa One-Hot, phục vụ Duy (`[D2]`) giải thích SHAP
-  * `results/*_y_t15_mock.joblib`: model $t+15$ được sinh tự động bởi `mock_ml_pipeline.py` (được bỏ qua trong Git `.gitignore` để tránh phình dung lượng kho mã nguồn)
-  * Smoke-test `shap.TreeExplainer` trên tên biến gốc (`[D2]`)
+  * `mock_ml_pipeline.py` (`[T3]`): chia `TimeSeriesSplit` theo `unique timestamp`, purge theo horizon, baseline `RandomForest`/`LightGBM` với `class_weight='balanced'`, đo `Recall`/`Precision`/`F1` lớp `2`, `Macro-F1`, OvR Average Precision (PR-AUC) & `Confusion Matrix`
+    * `results/mock_cv_fold_metrics.csv`, `mock_cv_summary.csv`, `mock_cv_confusion_matrices.json`: kết quả đánh giá mock theo fold, nhãn `y_t15`, `y_t30`, `y_t60`
+    * `results/*_feature_names.json`: danh sách đặc trưng sau mã hóa One-Hot, phục vụ Duy (`[D2]`) giải thích SHAP
+    * `results/*_y_t15_mock.joblib`: model $t+15$ được sinh tự động bởi `mock_ml_pipeline.py` (được bỏ qua trong Git `.gitignore` để tránh phình dung lượng kho mã nguồn)
+  * `shap_smoke_test.py` (`[D2]`): smoke-test `shap.TreeExplainer` trên `RandomForest`/`LightGBM` 3 lớp với tên biến gốc theo `feature_dictionary.md`. Chưa có model `[T3]` thì chạy trên dữ liệu giả. Khi có model: `python 03_models_evaluation/shap_smoke_test.py --model <model.joblib> --data <X_valid.csv>`. Lưu ý: SHAP của `RandomForest` tính theo xác suất, của `LightGBM` theo log-odds, nên chỉ so thứ hạng biến trong từng model, không so độ lớn giữa hai model.
   * `02_Model_Training.ipynb` (Tuần 5–6): import module `.py` tại thư mục này để huấn luyện Baseline ML, ST-GNN và xuất biểu đồ SHAP
 
 Cross-validation gom toàn bộ nút theo timestamp trước khi chia nên không có cùng một thời điểm ở cả train và validation. Mỗi chân trời có `gap` bằng đúng số bước dự báo (1/2/4 mốc 15 phút), để nhãn ở cuối tập train không chứa kết quả xảy ra trong kỳ validation. Preprocessing One-Hot được fit trong từng fold. Cờ `rain_scenario_synthetic` không nằm trong danh sách đặc trưng.
