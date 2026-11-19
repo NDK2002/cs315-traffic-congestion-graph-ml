@@ -29,6 +29,7 @@
 | :--- | :--- | :--- | :--- |
 | `timestamp` | datetime | Mốc đầu của bước `15'` | Dùng để chia `TimeSeriesSplit` theo **mốc duy nhất** (`[T3]`) |
 | `node_id` | int (`1–20`) | Khớp `node_id` trong `nodes.csv` | **Không** đưa vào mô hình: với 20 nút, cột này đóng vai trò định danh nên mô hình sẽ học thuộc lòng |
+| `rain_scenario_synthetic` | int `0/1` | Cờ do `build_mock_hang_xanh_dataset.py` (`[T2]`) gắn cho các bước có kịch bản mưa giả lập | **Chỉ có trong mock, không phải đặc trưng.** Cờ này cho biết trực tiếp cách dữ liệu được sinh ra, đưa vào mô hình sẽ gây rò rỉ |
 
 > `node_code`, `lat`, `lon`, `utm_x`, `utm_y`, `roads` trong `nodes.csv` **không** đưa vào bảng đặc trưng vì cùng lý do định danh. Bản đồ GIS (`[D1]`) và KG (`[S2]`) sẽ join lại các cột này qua `node_id` khi cần.
 
