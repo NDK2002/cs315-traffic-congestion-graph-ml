@@ -8,8 +8,13 @@ Mục tiêu:
 Chạy với dữ liệu giả (khi chưa có model của [T3]):
     python 03_models_evaluation/shap_smoke_test.py
 
-Chạy với model và dữ liệu của [T3]:
-    python 03_models_evaluation/shap_smoke_test.py --model <model.joblib> --data <X_valid.csv>
+Chạy với model và dữ liệu của [T3] (sinh model trước bằng mock_ml_pipeline.py):
+    python 03_models_evaluation/mock_ml_pipeline.py
+    python 03_models_evaluation/shap_smoke_test.py \
+        --model 03_models_evaluation/results/randomforest_y_t15_mock.joblib \
+                03_models_evaluation/results/lightgbm_y_t15_mock.joblib \
+        --data 01_data_sample/mock_hang_xanh_traffic_weather.csv
+Model của [T3] là sklearn Pipeline (One-Hot + classifier); script tự tách để TreeExplainer chạy được.
 
 Lưu ý về đơn vị SHAP: TreeExplainer giải thích đầu ra gốc của từng loại model.
 - RandomForest: SHAP tính trên xác suất (0–1), giá trị thường nhỏ (~0.05).
@@ -35,6 +40,7 @@ import shap
 import sklearn
 from lightgbm import LGBMClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
 
 MIN_SHAP_VERSION = (0, 46)
 TARGET_CLASS = 2
@@ -96,7 +102,7 @@ def make_dummy_data(n_rows: int = 3000, seed: int = SEED) -> tuple[pd.DataFrame,
         "dist_center_m": rng.uniform(40, 1120, n_rows),
         "time_slot": np.where(peak, 2, np.where((hour >= 22) | (hour < 6), 0, 1)),
         "rain_level": np.digitize(rain, [0.1, 2.5, 10, 30]),
-        "tide_alert": np.digitize(tide, [1.5, 1.6, 1.7]),
+        "tide_alert": np.digitize(tide, [1.4, 1.5, 1.6]),  # BĐ1/2/3 Phú An theo feature_dictionary.md
         "road_type_primary": (road == "primary").astype(int),
         "road_type_secondary": (road == "secondary").astype(int),
         "road_type_tertiary": (road == "tertiary").astype(int),
@@ -126,13 +132,18 @@ def shap_unit(model) -> str:
     return "xác suất"
 
 
-def explain_class(model, X: pd.DataFrame, target_class: int = TARGET_CLASS) -> tuple[np.ndarray, pd.DataFrame]:
+def explain_class(model, X: pd.DataFrame, target_class: int = TARGET_CLASS,
+                  check_names: bool = True) -> tuple[np.ndarray, pd.DataFrame]:
     """Tính SHAP của 1 lớp và trả về bảng mức ảnh hưởng trung bình |SHAP| theo tên biến gốc."""
     if not isinstance(X, pd.DataFrame):
         raise TypeError("X phải là pandas.DataFrame để giữ tên biến gốc")
 
-    model_cols = list(getattr(model, "feature_names_in_", X.columns))
-    if model_cols != list(X.columns):
+    # Classifier tách từ Pipeline được fit trên mảng numpy (LightGBM tự đặt tên Column_i),
+    # tên cột khi đó lấy từ preprocess nên chỉ kiểm số cột.
+    if not check_names:
+        if getattr(model, "n_features_in_", X.shape[1]) != X.shape[1]:
+            raise ValueError(f"Số cột X ({X.shape[1]}) khác lúc huấn luyện ({model.n_features_in_})")
+    elif (model_cols := list(getattr(model, "feature_names_in_", X.columns))) != list(X.columns):
         raise ValueError(f"Tên/thứ tự cột của X khác lúc huấn luyện model: {set(model_cols) ^ set(X.columns)}")
 
     classes = list(model.classes_)
@@ -189,9 +200,28 @@ def run_dummy(out_dir: pathlib.Path) -> None:
     print("\nLưu ý: đơn vị SHAP khác nhau giữa các model, chỉ so thứ hạng biến trong từng model.")
 
 
+def unwrap_pipeline(model, X_raw: pd.DataFrame):
+    """Tách sklearn Pipeline của [T3] (preprocess + classifier) vì TreeExplainer chỉ nhận model cây.
+
+    Trả về (classifier, X đã mã hóa One-Hot với tên cột gốc từ get_feature_names_out).
+    Model không phải Pipeline thì trả nguyên.
+    """
+    if not isinstance(model, Pipeline):
+        return model, X_raw
+    preprocess = model[:-1]
+    X_enc = preprocess.transform(X_raw)
+    if hasattr(X_enc, "toarray"):
+        X_enc = X_enc.toarray()
+    names = list(preprocess.get_feature_names_out())
+    return model[-1], pd.DataFrame(X_enc, columns=names, index=X_raw.index)
+
+
 def run_real(model_path: pathlib.Path, data_path: pathlib.Path, out_dir: pathlib.Path) -> None:
     model = joblib.load(model_path)
-    X = pd.read_csv(data_path)
+    X = pd.read_csv(data_path, encoding="utf-8-sig")
+    if not hasattr(model, "feature_names_in_"):
+        print("Cảnh báo: model không lưu feature_names_in_ (huấn luyện bằng numpy?). "
+              "Dùng FEATURE_COLS mặc định, không kiểm được tên cột lúc huấn luyện.")
     cols = list(getattr(model, "feature_names_in_", FEATURE_COLS))
     missing = [c for c in cols if c not in X.columns]
     if missing:
@@ -200,11 +230,19 @@ def run_real(model_path: pathlib.Path, data_path: pathlib.Path, out_dir: pathlib
     if len(X) > EXPLAIN_ROWS:
         X = X.sample(EXPLAIN_ROWS, random_state=SEED)
 
-    class_values, importance = explain_class(model, X)
+    is_pipeline = isinstance(model, Pipeline)
+    model, X = unwrap_pipeline(model, X)
+    extra, absent = set(X.columns) - set(FEATURE_COLS), set(FEATURE_COLS) - set(X.columns)
+    if extra or absent:
+        print(f"Cảnh báo: tên biến lệch feature_dictionary.md | thừa: {sorted(extra)} | thiếu: {sorted(absent)}")
+    else:
+        print(f"Tên biến khớp feature_dictionary.md: {X.shape[1]}/{len(FEATURE_COLS)} cột")
+
+    class_values, importance = explain_class(model, X, check_names=not is_pipeline)
     unit = shap_unit(model)
     print(f"\n[{type(model).__name__}] TreeExplainer OK | SHAP lớp {TARGET_CLASS}: {class_values.shape} "
-          f"| đơn vị: {unit}")
-    print(importance.to_string(index=False))
+          f"| đơn vị: {unit} | top 10 biến:")
+    print(importance.head(10).to_string(index=False))
     save_summary_plot(class_values, X, out_dir / f"shap_summary_{model_path.stem}_class{TARGET_CLASS}.png",
                       f"{type(model).__name__} - SHAP lớp {TARGET_CLASS} ({unit})")
 
@@ -212,14 +250,16 @@ def run_real(model_path: pathlib.Path, data_path: pathlib.Path, out_dir: pathlib
 def main() -> None:
     here = pathlib.Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description="Smoke-test SHAP TreeExplainer (CS315 - [D2]).")
-    parser.add_argument("--model", type=pathlib.Path, help="Model đã huấn luyện (.joblib) của [T3]")
+    parser.add_argument("--model", type=pathlib.Path, nargs="+",
+                        help="Một hoặc nhiều model .joblib của [T3] (model cây hoặc sklearn Pipeline)")
     parser.add_argument("--data", type=pathlib.Path, help="CSV đặc trưng (tên cột gốc) dùng để giải thích")
     parser.add_argument("--out-dir", type=pathlib.Path, default=here / "_smoke_output")
     args = parser.parse_args()
 
     check_versions()
     if args.model and args.data:
-        run_real(args.model, args.data, args.out_dir)
+        for model_path in args.model:
+            run_real(model_path, args.data, args.out_dir)
     else:
         run_dummy(args.out_dir)
     print(f"\nĐã lưu biểu đồ SHAP vào: {args.out_dir}")
