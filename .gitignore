@@ -27,5 +27,36 @@ __pycache__/
 *$py.class
 .pytest_cache/
 
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Machine Learning model artifacts & serialized weights
+*.joblib
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.onnx
+*.h5
+*.keras
+*.safetensors
+
+# Experiment tracking, logs & checkpoints
+runs/
+wandb/
+lightning_logs/
+checkpoints/
+*.log
+
+# Archive & compressed files
+*.zip
+*.tar.gz
+*.tar
+*.rar
+*.7z
+
 # SHAP smoke-test output ([D2])
 03_models_evaluation/_smoke_output/
