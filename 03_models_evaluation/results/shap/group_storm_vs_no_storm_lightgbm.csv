@@ -1,0 +1,22 @@
+group,mean_shap_storm,mean_shap_no_storm,target
+Giao thông hiện tại & quá khứ,3.526818,-1.164362,y_t15
+Mưa,0.008028,-0.509514,y_t15
+Thời gian,0.004869,-0.007169,y_t15
+Triều cường,0.000447,-0.000652,y_t15
+Thời tiết khác,0.000015,-0.000322,y_t15
+Lan truyền từ nút nguồn,-0.005507,0.001766,y_t15
+Thuộc tính tĩnh của nút,-0.005993,-0.017275,y_t15
+Giao thông hiện tại & quá khứ,3.527256,-1.145519,y_t30
+Mưa,0.013948,-0.529365,y_t30
+Thời tiết khác,0.001307,0.000430,y_t30
+Triều cường,0.000817,-0.001236,y_t30
+Thời gian,-0.000792,-0.002125,y_t30
+Lan truyền từ nút nguồn,-0.006823,0.003104,y_t30
+Thuộc tính tĩnh của nút,-0.006893,-0.018523,y_t30
+Giao thông hiện tại & quá khứ,3.496597,-1.978231,y_t60
+Thuộc tính tĩnh của nút,0.043899,-0.016542,y_t60
+Triều cường,0.009397,-0.000172,y_t60
+Thời gian,0.002886,0.000512,y_t60
+Thời tiết khác,0.000415,0.000195,y_t60
+Lan truyền từ nút nguồn,-0.002941,0.000283,y_t60
+Mưa,-0.015453,0.296783,y_t60
