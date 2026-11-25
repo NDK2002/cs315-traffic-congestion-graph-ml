@@ -44,6 +44,7 @@
 ├── 📝 De_Cuong_Chi_Tiet_Do_An_May_Hoc_Nang_Cao.md    <-- Bản thuyết minh Markdown 7 mục nội dung đầy đủ
 ├── 🗓️ Ke_Hoach_Thuc_Hien_Tuan_4.md                   <-- Phân công chi tiết Tuần 4 (11/11 – 17/11/2026) & sơ đồ phụ thuộc
 ├── 🗓️ Ke_Hoach_Thuc_Hien_Tuan_5.md                   <-- Phân công chi tiết Tuần 5 (18/11 – 24/11/2026) & sơ đồ phụ thuộc
+├── 🗓️ Ke_Hoach_Thuc_Hien_Tuan_6.md                   <-- Phân công chi tiết Tuần 6 (25/11 – 01/12/2026) & sơ đồ phụ thuộc
 ├── 📦 requirements.txt                               <-- Danh sách thư viện Python 3.10+ (tương thích local & Google Colab)
 ├── 🙈 .gitignore                                     <-- Loại trừ .venv/, .env, .ipynb_checkpoints/, __pycache__/ & file tạm Office
 └── 📖 README.md                                      <-- Bản hướng dẫn & tổng quan hồ sơ đồ án (File này)
