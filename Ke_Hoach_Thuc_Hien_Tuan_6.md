@@ -21,7 +21,7 @@ flowchart TD
         D2["[D2] Duy: XAI SHAP bóc tách mưa/triều (PR #8 Merged) ✅ ĐÃ XONG"]
         H1["[H1] Hôn: Đồ thị 20 nút & cờ flood_prone ✅ ĐÃ XONG"]
         T1["[T1] Trung: Hoàn thiện dữ liệu sạch 2 nhánh (METR-LA & Hàng Xanh đa mức mưa)"]
-        K1["[K1] Khang: Xuất selected_features.json & bảng đánh giá giảm chiều"]
+        K1["[K1] Khang: Xuất selected_features.json & bảng đánh giá giảm chiều ✅ ĐÃ XONG"]
         S1["[S1] Sơn: Hoàn thiện module Dynamic Routing trên NetworkX KG"]
     end
 
@@ -51,6 +51,7 @@ flowchart TD
 
     style D2 fill:#d4edda,stroke:#28a745,stroke-width:2px
     style H1 fill:#d4edda,stroke:#28a745,stroke-width:2px
+    style K1 fill:#d4edda,stroke:#28a745,stroke-width:2px
 ```
 
 ---
@@ -62,7 +63,7 @@ flowchart TD
 | **`[D2]`** | **Vũ Văn Duy** | `25/11` | **`100%`** | **✅ ĐÃ HOÀN THÀNH SỚM (PR #8 MERGED 25/11/2026):** Triển khai `shap_analysis.py`, đo lường đóng góp nhóm Mưa (25–34%) cho lớp 2 trên LightGBM/RF, xuất 18 artifacts biểu đồ/bảng số liệu và tài liệu `shap_analysis_notes.md`. |
 | **`[H1]`** | **Trần Hoàng Hôn** | `25/11` | **`100%`** | **✅ ĐÃ HOÀN THÀNH:** Bộ đồ thị 20 nút, 38 cạnh kèm cờ `flood_prone` và ma trận kề chuẩn hóa đã push lên `main` GitHub (commit `fe4191c`). Sẵn sàng làm input cho ST-GNN. |
 | **`[T1]`** | **Phạm Thành Trung** | `27/11` | `50%` | **Đang thực hiện:** Chuẩn bị tập dữ liệu đối chứng `METR-LA` chuẩn hóa mốc 15 phút và bổ sung kịch bản đa mức mưa (`5/15/30/50 mm/h`) cho nhánh Hàng Xanh. |
-| **`[K1]`** | **Nguyễn Duy Khang** | `27/11` | `75%` | **Đang hoàn thiện:** Đóng gói file cấu hình đặc trưng tối ưu `selected_features.json` từ kết quả $\chi^2 > 5.99$ và bảng giảm chiều phục vụ huấn luyện ST-GNN. |
+| **`[K1]`** | **Nguyễn Duy Khang** | `27/11` | **`100%`** | **✅ ĐÃ HOÀN THÀNH (25/11/2026):** Ghép cờ `flood_prone` của `[H1]` vào pipeline (đạt $\chi^2 \approx 76 > 5.99$ ở cả 3 mốc). Xuất `selected_features.json` gồm `selected` (30/32 cột, cho cây + SHAP), `selected_compact` (27 cột, bỏ 3 biến đa cộng tuyến có $\lvert r \rvert \ge 0.9$, không bỏ biến mưa/triều) và phần chia `stgnn.dynamic`/`static`. Xuất `feature_importance_ranking.csv` (Mutual Information theo fold, kèm đối chiếu SHAP). Hoàn thiện notebook `01_Feature_Selection.ipynb` và smoke test. Nhánh PCA giảm 40,6% số chiều. **`[T2]` đã được mở khóa phần đặc trưng.** |
 | **`[S1]`** | **Hoàng Cao Sơn** | `27/11` | `80%` | **Đang hoàn thiện:** Module đồ thị tri thức NetworkX 24 nút với trọng số phạt ngập/kẹt động; sẵn sàng đóng gói làm Tool cho AI Agent. |
 | **`[T2]`** | **Phạm Thành Trung** | `29/11` | `0%` | **Chờ dữ liệu & đặc trưng:** Huấn luyện ST-GNN / GAT kết hợp Ensemble; tối ưu trọng số lớp mất cân bằng để đạt `Recall >= 85%` & `F1 >= 80%` tại $t+15', t+30', t+60'$. |
 | **`[D1]`** | **Vũ Văn Duy** | `29/11` | `30%` | **Sẵn sàng thực hiện:** Nâng cấp bản đồ GIS Folium với timeline tương tác biểu diễn sóng lan truyền kẹt xe giữa các nút. |
@@ -78,7 +79,7 @@ flowchart TD
 | :--- | :---: | :--- | :--- | :--- |
 | **Trần Hoàng Hôn** *(Trưởng nhóm / PM)* | `26410046` | **`[H1]`** *(✅ ĐÃ XONG)*: Đồ thị 20 nút sạch lỗi; điều phối chung tiến độ | • **`[H2]`** (họp sync, duyệt PRs và xuất báo cáo: chờ `[T2]`, `[K2]`, `[S2]`, `[D1]` nộp trước `30/11`) | **`[H1]` mở khóa đồ thị** cho Trung huấn luyện ST-GNN (`[T2]`). |
 | **Phạm Thành Trung** *(Kỹ sư AI & ST-GNN)* | `26410141` | **`[T1]`** (hoàn tất script chuẩn hóa 2 nhánh dữ liệu sạch: METR-LA + Hàng Xanh đa mức mưa) | • **`[T2]`** (huấn luyện ST-GNN & Ensemble: chờ tập đặc trưng đã chọn lọc từ `[K1]`) | **`[T2]` là nút mở khóa trung tâm** cung cấp vector xác suất kẹt xe cho Sơn (`[S2]`), Duy (`[D1]`) và Khang (`[K2]`). |
-| **Nguyễn Duy Khang** *(Dữ liệu & Benchmark)* | `26410055` | **`[K1]`** (chốt `selected_features.json` từ kết quả $\chi^2 > 5.99$) | • **`[K2]`** (chờ kết quả thực nghiệm `[T2]` để tổng hợp bảng Benchmark) | **`[K1]` mở khóa** cấu hình đặc trưng cho Trung (`[T2]`). |
+| **Nguyễn Duy Khang** *(Dữ liệu & Benchmark)* | `26410055` | **`[K1]`** *(✅ ĐÃ XONG)*: chốt `selected_features.json` từ kết quả $\chi^2 > 5.99$ | • **`[K2]`** (chờ kết quả thực nghiệm `[T2]` để tổng hợp bảng Benchmark) | **`[K1]` mở khóa** cấu hình đặc trưng cho Trung (`[T2]`). |
 | **Vũ Văn Duy** *(XAI & GIS Heatmap)* | `26410031` | **`[D2]`** *(✅ ĐÃ XONG)*: Phân tích XAI SHAP hoàn tất trong PR #8 | • **`[D1]`** (chờ ma trận xác suất theo thời gian từ `[T2]` để render heatmap lan truyền) | **`[D2]` cung cấp giải thích XAI** cho báo cáo tuần và chương thực nghiệm đồ án. |
 | **Hoàng Cao Sơn** *(Traffic KG & AI Agent)* | `25730061` | **`[S1]`** (hoàn thiện hàm Dynamic Dijkstra phạt ngập/kẹt trên NetworkX) | • **`[S2]`** (chờ kết quả dự báo của `[T2]` để tích hợp LLM Tool-calling) | **`[S1]` & `[S2]` hoàn thiện AI Agent**, sẵn sàng chạy demo hỏi đáp lộ trình. |
 
@@ -111,7 +112,7 @@ flowchart TD
 
 | Mã CV & Hạn | Đầu việc Đồ án | Đầu vào (Inputs) | Chờ người khác hoàn thành? | Sản phẩm bàn giao (Deliverables) |
 | :--- | :--- | :--- | :--- | :--- |
-| **`[K1]`**<br>25/11 – 27/11 | Đóng gói kết quả Feature Selection chính thức và xuất cấu hình đặc trưng | • Notebook `02_feature_selection/01_Feature_Selection.ipynb`<br>• Dữ liệu đã gán nhãn `flood_prone` từ `[H1]` | **Làm được ngay.**<br>*Lưu ý kỹ thuật:* Áp dụng đúng ngưỡng $\chi^2 > 5.99$, bảo toàn các biến thời tiết phi tuyến, loại bỏ các biến có $r$ quá cao gây đa cộng tuyến nếu cần. | • File `02_feature_selection/results/selected_features.json`.<br>• Bảng tổng hợp mức độ quan trọng `02_feature_selection/results/feature_importance_ranking.csv`. |
+| **`[K1]`**<br>25/11 – 27/11<br>*(✅ Đã xong)* | Đóng gói kết quả Feature Selection chính thức và xuất cấu hình đặc trưng | • Notebook `02_feature_selection/01_Feature_Selection.ipynb`<br>• Dữ liệu đã gán nhãn `flood_prone` từ `[H1]` | **Làm được ngay.**<br>*Lưu ý kỹ thuật:* Áp dụng đúng ngưỡng $\chi^2 > 5.99$, bảo toàn các biến thời tiết phi tuyến, loại bỏ các biến có $r$ quá cao gây đa cộng tuyến nếu cần. | • File `02_feature_selection/results/selected_features.json`.<br>• Bảng tổng hợp mức độ quan trọng `02_feature_selection/results/feature_importance_ranking.csv`. |
 | **`[K2]`**<br>29/11 – 30/11 | Xây dựng bảng đối chứng Benchmark toàn diện (METR-LA vs Hàng Xanh; Baseline vs GNN) | • Kết quả đo đạc thực nghiệm từ `[T2]`<br>• Các độ đo: Macro-F1, Recall lớp 2, PR-AUC, MAE/RMSE | **CHỜ `[T2]` của Trung.**<br>*Lưu ý kỹ thuật:* Trình bày rõ tính ưu việt của việc bổ sung đồ thị và dữ liệu thời tiết so với mô hình chuỗi thời gian đơn lẻ. | • Bảng tổng hợp Benchmark `03_models_evaluation/results/benchmark_comparison_table.csv`.<br>• Đoạn phân tích chuyên sâu cho Chương 4 Báo cáo đồ án. |
 
 ---
@@ -141,7 +142,7 @@ flowchart TD
 - [x] **1. Phân tích XAI SHAP ([D2]):** Hoàn thành xuất sắc và vượt tiến độ; đo lường được đóng góp của mưa đạt 25–34% cho lớp kẹt nặng, xuất đủ 18 artifacts biểu đồ/bảng số liệu (✅ ĐÃ XONG - PR #8 Merged 25/11).
 - [ ] **2. Dữ liệu & Lựa chọn đặc trưng ([T1], [K1]):**
   - [ ] Chuẩn hóa tập đối chứng `METR-LA` về bước thời gian 15 phút.
-  - [ ] Xuất file cấu hình `selected_features.json` từ kết quả kiểm định $\chi^2 > 5.99$ và bảo toàn biến phi tuyến.
+  - [x] Xuất file cấu hình `selected_features.json` từ kết quả kiểm định $\chi^2 > 5.99$ và bảo toàn biến phi tuyến (✅ `[K1]` 25/11: kèm `feature_importance_ranking.csv`, tập rút gọn ST-GNN và notebook `01_Feature_Selection.ipynb`).
 - [ ] **3. Huấn luyện mô hình ST-GNN & Ensemble ([T2], [K2]):**
   - [ ] Huấn luyện thành công mô hình đồ thị ST-GNN / GAT trên ma trận kề $A$ 20 nút.
   - [ ] Đạt mục tiêu thiết kế phân loại lớp 2 (kẹt nặng): $\text{Recall} \ge 85\%$ và $\text{F1-Score} \ge 80\%$ tại các mốc $t+15', t+30', t+60'$.
