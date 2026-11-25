@@ -66,3 +66,22 @@ Nguồn: tag `oneway` của các way trong OSM (API `openstreetmap.org`, khung `
 * **"XVNT đoạn gần cầu Bình Triệu" chưa đưa lên bản đồ:** Đề cương chưa ghi vị trí cụ thể. Cần xác định đoạn này có nằm trong vùng đồ thị hay không.
 * Danh sách điểm ngập hiện mới theo tên đường, chưa có nguồn số liệu ngập chính thức. Cần bổ sung nguồn trước khi đưa vào báo cáo.
 * `feature_dictionary.md` hiện **chưa có biến ngập**. Muốn SHAP chỉ ra được tác động của "ngập" thì cần một biến cho việc này. Sẽ trao đổi với Khang tại buổi sync `[H5]`.
+
+---
+
+## V. KẾT QUẢ XỬ LÝ TRONG `[H1]` TUẦN 5 (Trần Hoàng Hôn — 24/11/2026)
+
+Toàn bộ các nghi vấn kỹ thuật GIS Tuần 4 đã được xử lý triệt để trong script `extract_hang_xanh_graph.py` và tái xuất bộ file đồ thị:
+
+1. **Khắc phục lỗi nút cụt `HX_20` (Cạnh `E_35`):**
+   - Đã bổ sung cạnh ngược đối xứng `20 → 17` (`E_38`, chiều dài `200.51 m`, 2 làn, `primary`).
+   - Cả `E_35` (`17 → 20`) và `E_38` (`20 → 17`) đều có `bidirectional_pair = True`.
+   - Bậc ra của `HX_20` tăng từ `0` lên `1`; bậc vào của `HX_17` tăng từ `1` lên `2`. Hiện không còn nút nào bị cụt chiều ra.
+2. **Đồng nhất cờ `oneway` Nguyễn Gia Trí:**
+   - Cả hai cạnh `E_26` (`10 → 15`) và `E_32` (`15 → 10`) đều được chuẩn hóa về `oneway = False` (phản ánh đúng thực tế đường 2 chiều).
+   - Số cặp cạnh 2 chiều có cờ `oneway` khác nhau giảm về **`0`**.
+3. **Tích hợp cờ vùng trũng ngập `flood_prone` (`bool`):**
+   - **`nodes.csv`:** Thêm cột `flood_prone`, gắn `True` cho `6` nút thuộc các trục trũng ngập: `HX_03`, `HX_04`, `HX_14` (Đinh Bộ Lĩnh), `HX_11` (Cầu Sơn / XVNT), `HX_15` (Ung Văn Khiêm / D2), `HX_18` (XVNT / Ung Văn Khiêm).
+   - **`edges.csv`:** Thêm cột `flood_prone`, gắn `True` cho `5` cạnh ngập: `E_05` (Cầu Sơn / XVNT), `E_13` (Đinh Bộ Lĩnh), `E_27` (XVNT đoạn Cầu Sơn), `E_31` (Cầu Đinh Bộ Lĩnh), `E_36` (Ung Văn Khiêm).
+   - Ma trận kề `adjacency_matrix.csv` kích thước `20 × 20`, tổng số cạnh có hướng đạt **`38`**, khớp 100% với `edges.csv`.
+   - Đồ thị định dạng GraphML `hang_xanh.graphml` được xuất mới chứa đầy đủ thuộc tính đỉnh và cạnh đã làm giàu.

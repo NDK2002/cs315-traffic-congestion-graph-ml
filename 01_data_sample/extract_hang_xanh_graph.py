@@ -1,11 +1,15 @@
-"""Trích xuất và chuẩn hóa đồ thị mạng lưới đường cụm Ngã tư Hàng Xanh (CS315 - [H3]).
+"""Trích xuất và chuẩn hóa đồ thị mạng lưới đường cụm Ngã tư Hàng Xanh (CS315 - [H1] Tuần 5).
 
 Quy trình:
 1. Tải đồ thị đường lái xe (`network_type='drive'`, `simplify=True`) trong bán kính 1000 m quanh Ngã tư Hàng Xanh bằng OSMnx kèm bộ lọc đường trục chính (`custom_filter`).
 2. Lọc nhánh theo 6 trục đường giới hạn của đề cương (loại bỏ đường hẻm nội khu), giữ các cầu/nút vòng xoay liên thông nội tại.
 3. Chiếu sang hệ tọa độ mét (UTM), gộp các nút gần nhau tại vòng xoay/nút giao lớn (`consolidate_intersections`) và hợp nhất cặp làn đối chiều phân cách trên đại lộ.
 4. Rút gọn các nút chia đoạn ngắn trên cùng một tuyến đường, loại bỏ cạnh song song trùng hướng, gán `node_id` (`HX_01`..`HX_N`) theo khoảng cách từ tâm Hàng Xanh.
-5. Xuất `nodes.csv`, `edges.csv`, `adjacency_matrix.csv` và `hang_xanh.graphml` trong `01_data_sample/`.
+5. Hiệu chỉnh & làm giàu thuộc tính kỹ thuật Tuần 5 ([H1]):
+   - Bổ sung cạnh ngược đối xứng 20 -> 17 (đối xứng E_35) giải quyết triệt để nút cụt HX_20.
+   - Đồng nhất cờ oneway=False cho cả hai chiều đường Nguyễn Gia Trí (E_26, E_32).
+   - Tích hợp cờ flood_prone (bool) cho các nút và cạnh thuộc 3 vùng trũng ngập (Đinh Bộ Lĩnh, Ung Văn Khiêm, Cầu Sơn / XVNT).
+6. Xuất `nodes.csv`, `edges.csv`, `adjacency_matrix.csv` và `hang_xanh.graphml` trong `01_data_sample/`.
 """
 
 from __future__ import annotations
@@ -371,6 +375,81 @@ def relabel_by_center_distance(
     return G_final, pd.DataFrame(node_rows)
 
 
+FLOOD_ROAD_KEYWORDS = ("Đinh Bộ Lĩnh", "Ung Văn Khiêm", "Cầu Sơn")
+FLOOD_PRONE_NODES = {3, 4, 11, 14, 15, 18}
+
+
+def curate_and_enrich_graph(
+    G_final: nx.MultiDiGraph,
+    nodes_df: pd.DataFrame,
+) -> tuple[nx.MultiDiGraph, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Thực hiện các bước tinh chỉnh & làm giàu đặc trưng đồ thị Tuần 5 ([H1]):
+    1. Bổ sung cạnh ngược 20 -> 17 để HX_20 không bị cụt (đối xứng E_35).
+    2. Đồng nhất cờ oneway=False cho cả hai chiều Nguyễn Gia Trí (E_26, E_32).
+    3. Gắn nhãn flood_prone (bool) cho các đỉnh và cạnh thuộc 3 vùng trũng ngập (Đinh Bộ Lĩnh, Ung Văn Khiêm, Cầu Sơn/XVNT).
+    """
+    # 1. Bổ sung cạnh ngược 20 -> 17 nếu thiếu
+    if G_final.has_edge(17, 20) and not G_final.has_edge(20, 17):
+        edge_17_20_data = list(G_final.get_edge_data(17, 20).values())[0]
+        reverse_data = dict(edge_17_20_data)
+        reverse_data.pop("geometry", None)
+        G_final.add_edge(20, 17, **reverse_data)
+
+    # 2. Chuẩn hóa cờ oneway cho trục Nguyễn Gia Trí (đường 2 chiều thông suốt)
+    for u, v, k, d in G_final.edges(keys=True, data=True):
+        if "Nguyễn Gia Trí" in str(d.get("name", "")):
+            d["oneway"] = False
+
+    # 3. Gán nhãn flood_prone cho cạnh
+    for u, v, k, d in G_final.edges(keys=True, data=True):
+        name = str(d.get("name", ""))
+        is_flood = any(kw in name for kw in FLOOD_ROAD_KEYWORDS) or (u == 11 and v == 18)
+        d["flood_prone"] = is_flood
+
+    # 4. Cập nhật bậc và nhãn flood_prone cho nút
+    for n in G_final.nodes():
+        in_deg = G_final.in_degree(n)
+        out_deg = G_final.out_degree(n)
+        is_flood = (n in FLOOD_PRONE_NODES)
+        G_final.nodes[n]["in_degree"] = in_deg
+        G_final.nodes[n]["out_degree"] = out_deg
+        G_final.nodes[n]["flood_prone"] = is_flood
+
+    nodes_df["in_degree"] = nodes_df["node_id"].map(lambda nid: G_final.in_degree(nid))
+    nodes_df["out_degree"] = nodes_df["node_id"].map(lambda nid: G_final.out_degree(nid))
+    nodes_df["flood_prone"] = nodes_df["node_id"].isin(FLOOD_PRONE_NODES)
+
+    # 5. Dựng bảng cạnh (edges_df)
+    edge_set = {(u, v) for u, v in G_final.edges()}
+    edge_rows: list[dict[str, Any]] = []
+    for idx, (u, v, d) in enumerate(
+        sorted(G_final.edges(data=True), key=lambda e: (e[0], e[1])),
+        start=1,
+    ):
+        edge_rows.append(
+            {
+                "edge_id": f"E_{idx:02d}",
+                "u": u,
+                "v": v,
+                "name": d["name"],
+                "highway": d["highway"],
+                "lanes": d["lanes"],
+                "length": d["length"],
+                "oneway": d["oneway"],
+                "bidirectional_pair": (v, u) in edge_set,
+                "maxspeed": d.get("maxspeed", ""),
+                "flood_prone": d.get("flood_prone", False),
+            }
+        )
+    edges_df = pd.DataFrame(edge_rows)
+
+    # 6. Dựng ma trận kề (adjacency_matrix.csv)
+    node_order = nodes_df["node_id"].tolist()
+    adj_df = nx.to_pandas_adjacency(G_final, nodelist=node_order, weight=None, dtype=int)
+
+    return G_final, nodes_df, edges_df, adj_df
+
+
 def build_hang_xanh_graph(
     center: tuple[float, float] = DEFAULT_CENTER,
     dist_m: int = DEFAULT_DIST_M,
@@ -398,31 +477,7 @@ def build_hang_xanh_graph(
     G_contracted = contract_short_splits(G_merged, max_combined_len=max_contract_len_m)
     G_clean = dedup_and_normalize_edges(G_contracted)
     G_final, nodes_df = relabel_by_center_distance(G_clean, center=center)
-
-    edge_set = {(u, v) for u, v in G_final.edges()}
-    edge_rows: list[dict[str, Any]] = []
-    for idx, (u, v, d) in enumerate(
-        sorted(G_final.edges(data=True), key=lambda e: (e[0], e[1])),
-        start=1,
-    ):
-        edge_rows.append(
-            {
-                "edge_id": f"E_{idx:02d}",
-                "u": u,
-                "v": v,
-                "name": d["name"],
-                "highway": d["highway"],
-                "lanes": d["lanes"],
-                "length": d["length"],
-                "oneway": d["oneway"],
-                "bidirectional_pair": (v, u) in edge_set,
-                "maxspeed": d.get("maxspeed", ""),
-            }
-        )
-    edges_df = pd.DataFrame(edge_rows)
-
-    node_order = nodes_df["node_id"].tolist()
-    adj_df = nx.to_pandas_adjacency(G_final, nodelist=node_order, weight=None, dtype=int)
+    G_final, nodes_df, edges_df, adj_df = curate_and_enrich_graph(G_final, nodes_df)
 
     return G_final, nodes_df, edges_df, adj_df
 
@@ -445,6 +500,13 @@ def export_graph_artifacts(
         raise ValueError(f"Kích thước ma trận kề {adj_df.shape} không khớp {n_nodes} nút.")
     if int(adj_df.values.sum()) != len(edges_df):
         raise ValueError("Tổng cạnh ma trận kề không khớp số dòng edges.csv.")
+    if "flood_prone" not in nodes_df.columns or "flood_prone" not in edges_df.columns:
+        raise ValueError("Cột flood_prone chưa được thêm vào nodes_df hoặc edges_df.")
+    if not G_final.has_edge(20, 17):
+        raise ValueError("Thiếu cạnh ngược 20 -> 17 (chưa sửa lỗi E_35).")
+    nyt_edges = edges_df[edges_df["name"].str.contains("Nguyễn Gia Trí")]
+    if (nyt_edges["oneway"] != False).any():
+        raise ValueError("Cờ oneway của Nguyễn Gia Trí chưa được đồng nhất về False.")
 
     paths = {
         "nodes": output_dir / "nodes.csv",
@@ -461,7 +523,7 @@ def export_graph_artifacts(
 
 def parse_args() -> argparse.Namespace:
     default_out = pathlib.Path(__file__).resolve().parent
-    parser = argparse.ArgumentParser(description="Trích xuất đồ thị đường cụm Hàng Xanh (CS315 - [H3]).")
+    parser = argparse.ArgumentParser(description="Trích xuất và chuẩn hóa đồ thị đường cụm Hàng Xanh (CS315 - [H1] Tuần 5).")
     parser.add_argument("--center-lat", type=float, default=DEFAULT_CENTER[0])
     parser.add_argument("--center-lon", type=float, default=DEFAULT_CENTER[1])
     parser.add_argument("--dist", type=int, default=DEFAULT_DIST_M)
