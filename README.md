@@ -3,7 +3,7 @@
 
 [![UIT](https://img.shields.io/badge/UIT-ĐHQG--HCM-blue.svg)](https://www.uit.edu.vn/)
 [![Course](https://img.shields.io/badge/Course-CS315.G12.LT.TTNT-1F4E79.svg)](#)
-[![Progress](https://img.shields.io/badge/Progress-0%25%20(Fast--track%20Kickoff)-orange.svg)](#)
+[![Progress](https://img.shields.io/badge/Progress-50%25%20(Tuần%205%20Sprint%20%26%20Tuần%206%20Fast--track)-brightgreen.svg)](#)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![ML-Frameworks](https://img.shields.io/badge/Frameworks-Scikit--Learn%20%7C%20LightGBM%20%7C%20XGBoost%20%7C%20PyTorch-green.svg)](#)
 [![XAI](https://img.shields.io/badge/Explainability-SHAP%20TreeExplainer-red.svg)](#)
@@ -43,6 +43,7 @@
 ├── 📊 Ke_Hoach_Thuc_Hien_Do_An_May_Hoc_Nang_Cao.xlsx  <-- [BẢN KẾ HOẠCH NỘP] Tiến độ 6 tuần SV/GV đánh giá (Excel)
 ├── 📝 De_Cuong_Chi_Tiet_Do_An_May_Hoc_Nang_Cao.md    <-- Bản thuyết minh Markdown 7 mục nội dung đầy đủ
 ├── 🗓️ Ke_Hoach_Thuc_Hien_Tuan_4.md                   <-- Phân công chi tiết Tuần 4 (11/11 – 17/11/2026) & sơ đồ phụ thuộc
+├── 🗓️ Ke_Hoach_Thuc_Hien_Tuan_5.md                   <-- Phân công chi tiết Tuần 5 (18/11 – 24/11/2026) & sơ đồ phụ thuộc
 ├── 📦 requirements.txt                               <-- Danh sách thư viện Python 3.10+ (tương thích local & Google Colab)
 ├── 🙈 .gitignore                                     <-- Loại trừ .venv/, .env, .ipynb_checkpoints/, __pycache__/ & file tạm Office
 └── 📖 README.md                                      <-- Bản hướng dẫn & tổng quan hồ sơ đồ án (File này)
@@ -103,10 +104,10 @@
 
 | Tuần | Thời Gian | Nội Dung Công Việc (Fast-track Sprint) | Phụ Trách | Tiến Độ |
 | :---: | :---: | :--- | :--- | :---: |
-| **Tuần 3** | 04/11 – 10/11 | Khởi tạo đề tài, viết Thuyết minh Đề cương chi tiết (MD), Kế hoạch thực hiện (XLSX) & chuẩn hóa dòng đăng ký file lớp. | Trần Hoàng Hôn (Lead) & Cả nhóm | **0%** |
-| **Tuần 4** | 11/11 – 17/11 | Trích xuất đồ thị OSMnx cụm Hàng Xanh; dựng khung GIS (Folium) kiểm tra tọa độ thực địa; mock pipeline ML & hàm đo Recall; khảo sát quốc tế & Schema Traffic KG; xin Thầy Dũng góp ý 13/11. | Hôn, Khang, Trung, Duy, Sơn | **0%** |
-| **Tuần 5** | 18/11 – 24/11 | Hoàn thiện 2 nhánh dữ liệu sạch (`METR-LA` đối chứng & Hàng Xanh: `OSMnx` + `Open-Meteo` + lịch triều Phú An + mô phỏng tăng cường); dứt điểm Feature Selection (Variance, Pearson, One-Hot, Chi2, nhánh PCA); huấn luyện Baseline ML (RF, LightGBM, XGBoost) dự báo sau 15'-30'-60'; dựng Traffic KG mẫu. | Khang, Trung, Sơn, Duy | **0%** |
-| **Tuần 6** | 25/11 – 01/12 | Nâng cấp mô hình đồ thị/Ensemble tối ưu Recall $\ge 85\%$ & F1-Score; áp dụng SHAP values bóc tách biến mưa ngập; thử nghiệm AI Agent gọi tool tra cứu lộ trình. | Trung, Duy, Sơn, Hôn | **0%** |
+| **Tuần 3** | 04/11 – 10/11 | Khởi tạo đề tài, viết Thuyết minh Đề cương chi tiết (MD), Kế hoạch thực hiện (XLSX) & chuẩn hóa dòng đăng ký file lớp. | Trần Hoàng Hôn (Lead) & Cả nhóm | **100%** |
+| **Tuần 4** | 11/11 – 17/11 | Trích xuất đồ thị OSMnx cụm Hàng Xanh; dựng khung GIS (Folium) kiểm tra tọa độ thực địa; mock pipeline ML & hàm đo Recall; khảo sát quốc tế & Schema Traffic KG; xin Thầy Dũng góp ý 13/11; hoàn thành 7 PRs và Báo cáo Tuần 4. | Hôn, Khang, Trung, Duy, Sơn | **100% (PR #1–#7 Merged)** |
+| **Tuần 5** | 18/11 – 24/11 | Hoàn thiện 2 nhánh dữ liệu sạch (`METR-LA` đối chứng & Hàng Xanh: `OSMnx` + `Open-Meteo` + lịch triều Phú An + mô phỏng tăng cường); dứt điểm Feature Selection (Variance, Pearson, One-Hot, Chi2, nhánh PCA); huấn luyện Baseline ML (RF, LightGBM, XGBoost) dự báo sau 15'-30'-60'; dựng Traffic KG mẫu. | Khang, Trung, Sơn, Duy | **80% (Đã xong đồ thị [H1], schema KG [S1], GIS [D1], SHAP [D2])** |
+| **Tuần 6** | 25/11 – 01/12 | Nâng cấp mô hình đồ thị/Ensemble tối ưu Recall $\ge 85\%$ & F1-Score; áp dụng SHAP values bóc tách biến mưa ngập; thử nghiệm AI Agent gọi tool tra cứu lộ trình. | Trung, Duy, Sơn, Hôn | **25% (PR #8 XAI SHAP Merged)** |
 | **Tuần 7** | 02/12 – 08/12 | Xây dựng bản đồ nhiệt trực quan hóa lan truyền sóng (Folium); hoàn thiện AI Agent; hoàn thành 100% nội dung Báo cáo Word/PDF (40–50 trang); đóng gói GitHub repo. | Duy, Sơn, Hôn, Trung, Khang | **0%** |
 | **Tuần 8** | 09/12 – 15/12 | Thiết kế Slide thuyết trình (25–30 slide); quay video clip demo kịch bản sóng ùn tắc khi mưa; BÁO CÁO VÀ NGHIỆM THU ĐỒ ÁN VỚI THẦY DŨNG; nộp trọn bộ hồ sơ. | Cả nhóm 5 thành viên (Hôn điều phối) | **0%** |
 
