@@ -132,6 +132,7 @@ Cột **Nhánh lọc** cho biết đặc trưng đi vào nhánh nào của pipel
 | `dist_center_m` | float | m | Khoảng cách tới tâm ngã tư Hàng Xanh, lấy từ `nodes.csv` | SỐ |
 | `road_type` | str | `trunk`, `primary`, `secondary`, `tertiary` | **Cấp đường cao nhất** trong `highway_classes` của nút (thứ tự ưu tiên `trunk > primary > secondary > tertiary`). Ví dụ: `"tertiary \| trunk"` → `trunk` | NOM |
 | `has_twoway` | int | `0/1` | `1` nếu nút có ít nhất 1 cạnh nối vào hoặc ra với `oneway = False` | NOM |
+| `flood_prone` | int | `0/1` | *(Bổ sung Tuần 6, `[K1]`)* `1` nếu nút thuộc vùng trũng ngập Đinh Bộ Lĩnh, Ung Văn Khiêm, Cầu Sơn / Xô Viết Nghệ Tĩnh (cột `flood_prone` trong `nodes.csv` do `[H1]` gắn, commit `fe4191c`; hiện là nút `3, 4, 11, 14, 15, 18`). Mock dataset chưa có cột này: `load_dataset()` trong `01_feature_selection_pipeline.py` tự ghép theo `node_id`. `METR-LA` không có thông tin ngập nên gán `0` | NOM |
 
 > **Về `oneway`:** đây là thuộc tính của **cạnh**, trong khi bảng dữ liệu tính theo **nút**, nên được quy về cột `has_twoway`. Hiện `34/37` cạnh là một chiều, nên cột này có thể gần như hằng số. Nếu vậy, `VarianceThreshold` sẽ tự loại nó. Đây là hành vi mong muốn, không phải lỗi.
 
@@ -144,7 +145,7 @@ Cột **Nhánh lọc** cho biết đặc trưng đi vào nhánh nào của pipel
 | **SỐ** | 22 cột đánh dấu SỐ | `MinMaxScaler` (chỉ để lọc phương sai) | `VarianceThreshold` | `0.01` trên dữ liệu đã MinMax |
 | | | — | `Pearson r` **chỉ để tham khảo**: (a) tương quan với từng nhãn; (b) cặp đặc trưng có `\|r\| ≥ 0.9` được gắn cờ dư thừa | **Không lọc cứng** (xem Mục VII.3) |
 | **ORD** | `time_slot`, `rain_level`, `tide_alert` | Đã là số nguyên có thứ tự (`OrdinalEncoder` với `categories` cố định) | $\chi^2$ với từng nhãn | Giữ nếu $\chi^2 > 5.99$ ($\alpha = 0.05$, $df = 3 - 1 = 2$) |
-| **NOM** | `road_type`, `is_weekend`, `has_twoway` | `OneHotEncoder(handle_unknown="ignore", drop="if_binary")` | $\chi^2$ với từng nhãn, tính trên từng cột dummy | Giữ nếu $\chi^2 > 5.99$ |
+| **NOM** | `road_type`, `is_weekend`, `has_twoway`, `flood_prone` | `OneHotEncoder(handle_unknown="ignore", drop="if_binary")` | $\chi^2$ với từng nhãn, tính trên từng cột dummy | Giữ nếu $\chi^2 > 5.99$ |
 | **PCA (đối chứng)** | Các cột SỐ còn lại sau `VarianceThreshold` | `StandardScaler` | `PCA` giữ `95%` phương sai | **Nhánh riêng**, chỉ để so sánh. **Không** đưa vào mô hình cây chính hay SHAP |
 
 **Quy tắc bắt buộc của pipeline:**
