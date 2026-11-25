@@ -1,0 +1,94 @@
+feature,mean_abs_shap,group,target
+speed_ratio,2.135217,Giao thông hiện tại & quá khứ,y_t15
+rain_cum_3h_mm,1.095002,Mưa,y_t15
+free_flow_kmh,0.048686,Thuộc tính tĩnh của nút,y_t15
+speed_lag2,0.031830,Giao thông hiện tại & quá khứ,y_t15
+time_slot,0.007297,Thời gian,y_t15
+rain_mm_h,0.006237,Mưa,y_t15
+speed_kmh,0.006222,Giao thông hiện tại & quá khứ,y_t15
+volume_veh,0.005395,Giao thông hiện tại & quá khứ,y_t15
+road_type_tertiary,0.005317,Thuộc tính tĩnh của nút,y_t15
+maxspeed_in_kmh,0.003414,Thuộc tính tĩnh của nút,y_t15
+upstream_speed_min,0.003102,Lan truyền từ nút nguồn,y_t15
+tide_level_m,0.001645,Triều cường,y_t15
+speed_lag4,0.000332,Giao thông hiện tại & quá khứ,y_t15
+road_type_primary,0.000332,Thuộc tính tĩnh của nút,y_t15
+dist_center_m,0.000284,Thuộc tính tĩnh của nút,y_t15
+humidity_pct,0.000276,Thời tiết khác,y_t15
+speed_lag1,0.000259,Giao thông hiện tại & quá khứ,y_t15
+hour_sin,0.000253,Thời gian,y_t15
+speed_delta1,0.000174,Giao thông hiện tại & quá khứ,y_t15
+hour_cos,0.000081,Thời gian,y_t15
+upstream_congested_cnt,0.000000,Lan truyền từ nút nguồn,y_t15
+temperature_c,0.000000,Thời tiết khác,y_t15
+rain_level,0.000000,Mưa,y_t15
+tide_alert,0.000000,Triều cường,y_t15
+lanes_in_mean,0.000000,Thuộc tính tĩnh của nút,y_t15
+in_degree,0.000000,Thuộc tính tĩnh của nút,y_t15
+out_degree,0.000000,Thuộc tính tĩnh của nút,y_t15
+road_type_secondary,0.000000,Thuộc tính tĩnh của nút,y_t15
+road_type_trunk,0.000000,Thuộc tính tĩnh của nút,y_t15
+is_weekend_1,0.000000,Thời gian,y_t15
+has_twoway_1,0.000000,Thuộc tính tĩnh của nút,y_t15
+speed_ratio,2.170151,Giao thông hiện tại & quá khứ,y_t30
+rain_cum_3h_mm,1.159187,Mưa,y_t30
+free_flow_kmh,0.056804,Thuộc tính tĩnh của nút,y_t30
+speed_kmh,0.008946,Giao thông hiện tại & quá khứ,y_t30
+road_type_tertiary,0.006077,Thuộc tính tĩnh của nút,y_t30
+maxspeed_in_kmh,0.005917,Thuộc tính tĩnh của nút,y_t30
+rain_mm_h,0.005844,Mưa,y_t30
+upstream_speed_min,0.004618,Lan truyền từ nút nguồn,y_t30
+volume_veh,0.004254,Giao thông hiện tại & quá khứ,y_t30
+hour_cos,0.002009,Thời gian,y_t30
+road_type_primary,0.001935,Thuộc tính tĩnh của nút,y_t30
+time_slot,0.001657,Thời gian,y_t30
+tide_level_m,0.001643,Triều cường,y_t30
+speed_lag4,0.001606,Giao thông hiện tại & quá khứ,y_t30
+speed_lag1,0.000739,Giao thông hiện tại & quá khứ,y_t30
+humidity_pct,0.000682,Thời tiết khác,y_t30
+dist_center_m,0.000222,Thuộc tính tĩnh của nút,y_t30
+speed_lag2,0.000143,Giao thông hiện tại & quá khứ,y_t30
+hour_sin,0.000078,Thời gian,y_t30
+speed_delta1,0.000024,Giao thông hiện tại & quá khứ,y_t30
+in_degree,0.000021,Thuộc tính tĩnh của nút,y_t30
+temperature_c,0.000014,Thời tiết khác,y_t30
+road_type_secondary,0.000004,Thuộc tính tĩnh của nút,y_t30
+upstream_congested_cnt,0.000000,Lan truyền từ nút nguồn,y_t30
+rain_level,0.000000,Mưa,y_t30
+tide_alert,0.000000,Triều cường,y_t30
+lanes_in_mean,0.000000,Thuộc tính tĩnh của nút,y_t30
+out_degree,0.000000,Thuộc tính tĩnh của nút,y_t30
+road_type_trunk,0.000000,Thuộc tính tĩnh của nút,y_t30
+is_weekend_1,0.000000,Thời gian,y_t30
+has_twoway_1,0.000000,Thuộc tính tĩnh của nút,y_t30
+speed_ratio,2.814156,Giao thông hiện tại & quá khứ,y_t60
+rain_cum_3h_mm,0.973240,Mưa,y_t60
+free_flow_kmh,0.082543,Thuộc tính tĩnh của nút,y_t60
+road_type_tertiary,0.005598,Thuộc tính tĩnh của nút,y_t60
+tide_level_m,0.004580,Triều cường,y_t60
+speed_kmh,0.003989,Giao thông hiện tại & quá khứ,y_t60
+upstream_speed_min,0.002172,Lan truyền từ nút nguồn,y_t60
+time_slot,0.000881,Thời gian,y_t60
+hour_cos,0.000812,Thời gian,y_t60
+temperature_c,0.000796,Thời tiết khác,y_t60
+hour_sin,0.000659,Thời gian,y_t60
+speed_lag1,0.000550,Giao thông hiện tại & quá khứ,y_t60
+rain_mm_h,0.000363,Mưa,y_t60
+volume_veh,0.000278,Giao thông hiện tại & quá khứ,y_t60
+maxspeed_in_kmh,0.000276,Thuộc tính tĩnh của nút,y_t60
+road_type_primary,0.000240,Thuộc tính tĩnh của nút,y_t60
+humidity_pct,0.000236,Thời tiết khác,y_t60
+speed_lag4,0.000101,Giao thông hiện tại & quá khứ,y_t60
+speed_lag2,0.000090,Giao thông hiện tại & quá khứ,y_t60
+speed_delta1,0.000037,Giao thông hiện tại & quá khứ,y_t60
+road_type_secondary,0.000022,Thuộc tính tĩnh của nút,y_t60
+upstream_congested_cnt,0.000000,Lan truyền từ nút nguồn,y_t60
+rain_level,0.000000,Mưa,y_t60
+tide_alert,0.000000,Triều cường,y_t60
+lanes_in_mean,0.000000,Thuộc tính tĩnh của nút,y_t60
+in_degree,0.000000,Thuộc tính tĩnh của nút,y_t60
+out_degree,0.000000,Thuộc tính tĩnh của nút,y_t60
+dist_center_m,0.000000,Thuộc tính tĩnh của nút,y_t60
+road_type_trunk,0.000000,Thuộc tính tĩnh của nút,y_t60
+is_weekend_1,0.000000,Thời gian,y_t60
+has_twoway_1,0.000000,Thuộc tính tĩnh của nút,y_t60

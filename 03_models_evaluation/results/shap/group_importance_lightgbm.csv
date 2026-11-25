@@ -1,0 +1,22 @@
+group,mean_abs_shap,share_pct,target
+Giao thông hiện tại & quá khứ,2.165116,65.100000,y_t15
+Mưa,1.093093,32.900000,y_t15
+Thuộc tính tĩnh của nút,0.052627,1.600000,y_t15
+Thời gian,0.007458,0.200000,y_t15
+Lan truyền từ nút nguồn,0.003102,0.100000,y_t15
+Triều cường,0.001645,0.000000,y_t15
+Thời tiết khác,0.000276,0.000000,y_t15
+Giao thông hiện tại & quá khứ,2.170127,63.900000,y_t30
+Mưa,1.157007,34.000000,y_t30
+Thuộc tính tĩnh của nút,0.061700,1.800000,y_t30
+Lan truyền từ nút nguồn,0.004618,0.100000,y_t30
+Thời gian,0.002543,0.100000,y_t30
+Triều cường,0.001643,0.000000,y_t30
+Thời tiết khác,0.000669,0.000000,y_t30
+Giao thông hiện tại & quá khứ,2.812256,72.400000,y_t60
+Mưa,0.973253,25.100000,y_t60
+Thuộc tính tĩnh của nút,0.087872,2.300000,y_t60
+Triều cường,0.004580,0.100000,y_t60
+Lan truyền từ nút nguồn,0.002172,0.100000,y_t60
+Thời gian,0.001553,0.000000,y_t60
+Thời tiết khác,0.000631,0.000000,y_t60
