@@ -38,6 +38,31 @@ def test_missing_node_attribute_gives_hint(frame):
         fs.FeatureSelector().fit(frame.drop(columns="flood_prone"), frame["y_t15"])
 
 
+def test_selector_normalizes_boolean_and_string_flood_prone(frame):
+    base = fs.FeatureSelector().fit(frame[fs.ALL_FEATURES], frame["y_t15"])
+
+    bool_df = frame.copy()
+    bool_df["flood_prone"] = bool_df["flood_prone"].astype(bool)
+    sel_bool = fs.FeatureSelector().fit(bool_df[fs.ALL_FEATURES], bool_df["y_t15"])
+    assert sel_bool.selected_features_ == base.selected_features_
+    pd.testing.assert_frame_equal(sel_bool.report_, base.report_)
+
+    str_df = frame.copy()
+    str_df["flood_prone"] = str_df["flood_prone"].map({1: "True", 0: "False"})
+    sel_str = fs.FeatureSelector().fit(str_df[fs.ALL_FEATURES], str_df["y_t15"])
+    assert sel_str.selected_features_ == base.selected_features_
+    pd.testing.assert_frame_equal(sel_str.report_, base.report_)
+
+
+def test_selector_drops_constant_flood_prone_for_metr_la(frame):
+    metr_la = frame.copy()
+    metr_la["flood_prone"] = 0
+    selector = fs.FeatureSelector().fit(metr_la[fs.ALL_FEATURES], metr_la["y_t15"])
+    assert "flood_prone_1" not in selector.selected_features_
+    score = float(selector.report_.loc[selector.report_["feature"] == "flood_prone_1", "score"].iloc[0])
+    assert score == 0.0
+
+
 def test_selector_keeps_original_names_and_values(frame):
     train = frame.iloc[:2000]
     selector = fs.FeatureSelector().fit(train[fs.ALL_FEATURES], train["y_t15"])

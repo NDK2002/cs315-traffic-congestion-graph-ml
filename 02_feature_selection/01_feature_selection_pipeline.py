@@ -88,6 +88,7 @@ NOMINAL_CATEGORIES = {
 }
 ORDINAL_FEATURES = list(ORDINAL_CATEGORIES)
 NOMINAL_FEATURES = list(NOMINAL_CATEGORIES)
+BINARY_NOMINAL_FEATURES = [column for column, cats in NOMINAL_CATEGORIES.items() if cats == [0, 1]]
 ALL_FEATURES = NUMERIC_FEATURES + ORDINAL_FEATURES + NOMINAL_FEATURES
 # Nhãn -> số bước 15' nhìn về tương lai (dùng làm khoảng purge giữa train và valid).
 TARGET_OFFSETS = {"y_t15": 1, "y_t30": 2, "y_t60": 4}
@@ -127,19 +128,59 @@ def base_feature(encoded_name: str) -> str:
     raise KeyError(f"Không xác định được cột gốc của {encoded_name!r}")
 
 
+def _coerce_binary_series(series: pd.Series) -> pd.Series:
+    """Chuẩn hóa cột nhị phân (bool / 'True'/'False' / '0'/'1' / int) về int 0/1."""
+    if pd.api.types.is_bool_dtype(series):
+        return series.astype(int)
+    if pd.api.types.is_integer_dtype(series):
+        return series
+
+    def _parse(value):
+        if pd.isna(value):
+            return np.nan
+        if isinstance(value, (bool, np.bool_)):
+            return int(value)
+        if isinstance(value, (int, np.integer)):
+            return int(value)
+        if isinstance(value, (float, np.floating)):
+            return int(value) if value in (0.0, 1.0) else np.nan
+        if isinstance(value, str):
+            token = value.strip().lower()
+            if token in ("true", "1"):
+                return 1
+            if token in ("false", "0"):
+                return 0
+        return np.nan
+
+    normalized = series.map(_parse)
+    if normalized.isna().any():
+        bad = sorted({repr(v) for v in series[normalized.isna()].unique()})
+        raise ValueError(f"Cột nhị phân {series.name!r} chứa giá trị không hợp lệ: {bad}")
+    return normalized.astype(int)
+
+
 def attach_node_attributes(frame: pd.DataFrame, nodes_path: Path = NODES_PATH) -> pd.DataFrame:
     """Ghép thuộc tính tĩnh của nút (``flood_prone``) từ ``nodes.csv`` theo ``node_id`` nếu còn thiếu."""
     missing = [column for column in NODE_ATTRIBUTES if column not in frame.columns]
-    if not missing:
-        return frame
-    nodes = pd.read_csv(nodes_path, encoding="utf-8-sig", usecols=["node_id", *missing])
-    for column in missing:
-        nodes[column] = nodes[column].map({True: 1, False: 0, "True": 1, "False": 0}).astype(int)
-    merged = frame.merge(nodes, on="node_id", how="left", validate="many_to_one")
-    unmatched = merged[missing].isna().any(axis=1)
-    if unmatched.any():
-        raise ValueError(f"node_id không có trong {nodes_path.name}: {sorted(merged.loc[unmatched, 'node_id'].unique())}")
-    return merged
+    if missing:
+        nodes = pd.read_csv(nodes_path, encoding="utf-8-sig", usecols=["node_id", *missing])
+        for column in missing:
+            nodes[column] = _coerce_binary_series(nodes[column])
+        frame = frame.merge(nodes, on="node_id", how="left", validate="many_to_one")
+        unmatched = frame[missing].isna().any(axis=1)
+        if unmatched.any():
+            raise ValueError(
+                f"node_id không có trong {nodes_path.name}: {sorted(frame.loc[unmatched, 'node_id'].unique())}"
+            )
+    needs_coerce = [
+        column for column in NODE_ATTRIBUTES
+        if column in frame.columns and not pd.api.types.is_integer_dtype(frame[column])
+    ]
+    if needs_coerce:
+        frame = frame.copy()
+        for column in needs_coerce:
+            frame[column] = _coerce_binary_series(frame[column])
+    return frame
 
 
 def load_dataset(data_path: Path = DATA_PATH, nodes_path: Path = NODES_PATH) -> pd.DataFrame:
@@ -155,6 +196,14 @@ def _check_columns(X: pd.DataFrame) -> pd.DataFrame:
     if missing:
         hint = " (dùng load_dataset() hoặc attach_node_attributes() để ghép từ nodes.csv)" if set(missing) <= set(NODE_ATTRIBUTES) else ""
         raise KeyError(f"Thiếu cột đặc trưng: {missing}{hint}")
+    needs_coerce = [
+        column for column in BINARY_NOMINAL_FEATURES
+        if not pd.api.types.is_integer_dtype(X[column])
+    ]
+    if needs_coerce:
+        X = X.copy()
+        for column in needs_coerce:
+            X[column] = _coerce_binary_series(X[column])
     return X
 
 
