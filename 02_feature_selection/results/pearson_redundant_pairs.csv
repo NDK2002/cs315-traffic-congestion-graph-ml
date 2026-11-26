@@ -1,5 +1,5 @@
 feature_a,feature_b,pearson_r
 temperature_c,humidity_pct,-0.9774
 speed_kmh,speed_ratio,0.9644
-speed_lag1,speed_lag2,0.9370
-speed_kmh,speed_lag1,0.9370
+speed_lag1,speed_lag2,0.9371
+speed_kmh,speed_lag1,0.9371

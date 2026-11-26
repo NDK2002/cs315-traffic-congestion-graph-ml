@@ -29,12 +29,95 @@
       "road_type_primary",
       "road_type_secondary",
       "road_type_tertiary",
-      "has_twoway_1"
+      "has_twoway_1",
+      "flood_prone_1"
     ],
     "dropped": [
       "speed_delta1",
       "is_weekend_1"
-    ]
+    ],
+    "selected_compact": [
+      "volume_veh",
+      "speed_ratio",
+      "speed_lag1",
+      "speed_lag4",
+      "upstream_speed_min",
+      "upstream_congested_cnt",
+      "rain_mm_h",
+      "rain_cum_3h_mm",
+      "humidity_pct",
+      "tide_level_m",
+      "hour_sin",
+      "hour_cos",
+      "free_flow_kmh",
+      "lanes_in_mean",
+      "maxspeed_in_kmh",
+      "in_degree",
+      "out_degree",
+      "dist_center_m",
+      "time_slot",
+      "rain_level",
+      "tide_alert",
+      "road_type_trunk",
+      "road_type_primary",
+      "road_type_secondary",
+      "road_type_tertiary",
+      "has_twoway_1",
+      "flood_prone_1"
+    ],
+    "collinear_dropped": [
+      {
+        "feature": "speed_kmh",
+        "kept": "speed_ratio",
+        "pearson_r_mean": 0.965,
+        "fold_frequency": 1.0
+      },
+      {
+        "feature": "speed_lag2",
+        "kept": "speed_lag1",
+        "pearson_r_mean": 0.9319,
+        "fold_frequency": 1.0
+      },
+      {
+        "feature": "temperature_c",
+        "kept": "humidity_pct",
+        "pearson_r_mean": -0.9861,
+        "fold_frequency": 0.6
+      }
+    ],
+    "stgnn": {
+      "dynamic": [
+        "volume_veh",
+        "speed_ratio",
+        "speed_lag1",
+        "speed_lag4",
+        "upstream_speed_min",
+        "upstream_congested_cnt",
+        "rain_mm_h",
+        "rain_cum_3h_mm",
+        "humidity_pct",
+        "tide_level_m",
+        "hour_sin",
+        "hour_cos",
+        "time_slot",
+        "rain_level",
+        "tide_alert"
+      ],
+      "static": [
+        "free_flow_kmh",
+        "lanes_in_mean",
+        "maxspeed_in_kmh",
+        "in_degree",
+        "out_degree",
+        "dist_center_m",
+        "road_type_trunk",
+        "road_type_primary",
+        "road_type_secondary",
+        "road_type_tertiary",
+        "has_twoway_1",
+        "flood_prone_1"
+      ]
+    }
   },
   "y_t30": {
     "selected": [
@@ -66,12 +149,95 @@
       "road_type_primary",
       "road_type_secondary",
       "road_type_tertiary",
-      "has_twoway_1"
+      "has_twoway_1",
+      "flood_prone_1"
     ],
     "dropped": [
       "speed_delta1",
       "is_weekend_1"
-    ]
+    ],
+    "selected_compact": [
+      "volume_veh",
+      "speed_ratio",
+      "speed_lag1",
+      "speed_lag4",
+      "upstream_speed_min",
+      "upstream_congested_cnt",
+      "rain_mm_h",
+      "rain_cum_3h_mm",
+      "humidity_pct",
+      "tide_level_m",
+      "hour_sin",
+      "hour_cos",
+      "free_flow_kmh",
+      "lanes_in_mean",
+      "maxspeed_in_kmh",
+      "in_degree",
+      "out_degree",
+      "dist_center_m",
+      "time_slot",
+      "rain_level",
+      "tide_alert",
+      "road_type_trunk",
+      "road_type_primary",
+      "road_type_secondary",
+      "road_type_tertiary",
+      "has_twoway_1",
+      "flood_prone_1"
+    ],
+    "collinear_dropped": [
+      {
+        "feature": "speed_kmh",
+        "kept": "speed_ratio",
+        "pearson_r_mean": 0.9652,
+        "fold_frequency": 0.8
+      },
+      {
+        "feature": "speed_lag2",
+        "kept": "speed_lag1",
+        "pearson_r_mean": 0.9315,
+        "fold_frequency": 1.0
+      },
+      {
+        "feature": "temperature_c",
+        "kept": "humidity_pct",
+        "pearson_r_mean": -0.9856,
+        "fold_frequency": 0.6
+      }
+    ],
+    "stgnn": {
+      "dynamic": [
+        "volume_veh",
+        "speed_ratio",
+        "speed_lag1",
+        "speed_lag4",
+        "upstream_speed_min",
+        "upstream_congested_cnt",
+        "rain_mm_h",
+        "rain_cum_3h_mm",
+        "humidity_pct",
+        "tide_level_m",
+        "hour_sin",
+        "hour_cos",
+        "time_slot",
+        "rain_level",
+        "tide_alert"
+      ],
+      "static": [
+        "free_flow_kmh",
+        "lanes_in_mean",
+        "maxspeed_in_kmh",
+        "in_degree",
+        "out_degree",
+        "dist_center_m",
+        "road_type_trunk",
+        "road_type_primary",
+        "road_type_secondary",
+        "road_type_tertiary",
+        "has_twoway_1",
+        "flood_prone_1"
+      ]
+    }
   },
   "y_t60": {
     "selected": [
@@ -103,11 +269,94 @@
       "road_type_primary",
       "road_type_secondary",
       "road_type_tertiary",
-      "has_twoway_1"
+      "has_twoway_1",
+      "flood_prone_1"
     ],
     "dropped": [
       "speed_delta1",
       "is_weekend_1"
-    ]
+    ],
+    "selected_compact": [
+      "volume_veh",
+      "speed_ratio",
+      "speed_lag1",
+      "speed_lag4",
+      "upstream_speed_min",
+      "upstream_congested_cnt",
+      "rain_mm_h",
+      "rain_cum_3h_mm",
+      "humidity_pct",
+      "tide_level_m",
+      "hour_sin",
+      "hour_cos",
+      "free_flow_kmh",
+      "lanes_in_mean",
+      "maxspeed_in_kmh",
+      "in_degree",
+      "out_degree",
+      "dist_center_m",
+      "time_slot",
+      "rain_level",
+      "tide_alert",
+      "road_type_trunk",
+      "road_type_primary",
+      "road_type_secondary",
+      "road_type_tertiary",
+      "has_twoway_1",
+      "flood_prone_1"
+    ],
+    "collinear_dropped": [
+      {
+        "feature": "speed_kmh",
+        "kept": "speed_ratio",
+        "pearson_r_mean": 0.9655,
+        "fold_frequency": 0.8
+      },
+      {
+        "feature": "speed_lag2",
+        "kept": "speed_lag1",
+        "pearson_r_mean": 0.9308,
+        "fold_frequency": 1.0
+      },
+      {
+        "feature": "temperature_c",
+        "kept": "humidity_pct",
+        "pearson_r_mean": -0.9818,
+        "fold_frequency": 0.8
+      }
+    ],
+    "stgnn": {
+      "dynamic": [
+        "volume_veh",
+        "speed_ratio",
+        "speed_lag1",
+        "speed_lag4",
+        "upstream_speed_min",
+        "upstream_congested_cnt",
+        "rain_mm_h",
+        "rain_cum_3h_mm",
+        "humidity_pct",
+        "tide_level_m",
+        "hour_sin",
+        "hour_cos",
+        "time_slot",
+        "rain_level",
+        "tide_alert"
+      ],
+      "static": [
+        "free_flow_kmh",
+        "lanes_in_mean",
+        "maxspeed_in_kmh",
+        "in_degree",
+        "out_degree",
+        "dist_center_m",
+        "road_type_trunk",
+        "road_type_primary",
+        "road_type_secondary",
+        "road_type_tertiary",
+        "has_twoway_1",
+        "flood_prone_1"
+      ]
+    }
   }
 }

@@ -132,6 +132,7 @@ Cột **Nhánh lọc** cho biết đặc trưng đi vào nhánh nào của pipel
 | `dist_center_m` | float | m | Khoảng cách tới tâm ngã tư Hàng Xanh, lấy từ `nodes.csv` | SỐ |
 | `road_type` | str | `trunk`, `primary`, `secondary`, `tertiary` | **Cấp đường cao nhất** trong `highway_classes` của nút (thứ tự ưu tiên `trunk > primary > secondary > tertiary`). Ví dụ: `"tertiary \| trunk"` → `trunk` | NOM |
 | `has_twoway` | int | `0/1` | `1` nếu nút có ít nhất 1 cạnh nối vào hoặc ra với `oneway = False` | NOM |
+| `flood_prone` | int | `0/1` | *(Bổ sung Tuần 6, `[K1]`)* `1` nếu nút thuộc vùng trũng ngập Đinh Bộ Lĩnh, Ung Văn Khiêm, Cầu Sơn / Xô Viết Nghệ Tĩnh (cột `flood_prone` trong `nodes.csv` do `[H1]` gắn, commit `fe4191c`; hiện là nút `3, 4, 11, 14, 15, 18`). Mock dataset chưa có cột này: `load_dataset()` trong `01_feature_selection_pipeline.py` tự ghép theo `node_id`. `METR-LA` không có thông tin ngập nên gán `0` | NOM |
 
 > **Về `oneway`:** đây là thuộc tính của **cạnh**, trong khi bảng dữ liệu tính theo **nút**, nên được quy về cột `has_twoway`. Hiện `34/37` cạnh là một chiều, nên cột này có thể gần như hằng số. Nếu vậy, `VarianceThreshold` sẽ tự loại nó. Đây là hành vi mong muốn, không phải lỗi.
 
@@ -144,7 +145,7 @@ Cột **Nhánh lọc** cho biết đặc trưng đi vào nhánh nào của pipel
 | **SỐ** | 22 cột đánh dấu SỐ | `MinMaxScaler` (chỉ để lọc phương sai) | `VarianceThreshold` | `0.01` trên dữ liệu đã MinMax |
 | | | — | `Pearson r` **chỉ để tham khảo**: (a) tương quan với từng nhãn; (b) cặp đặc trưng có `\|r\| ≥ 0.9` được gắn cờ dư thừa | **Không lọc cứng** (xem Mục VII.3) |
 | **ORD** | `time_slot`, `rain_level`, `tide_alert` | Đã là số nguyên có thứ tự (`OrdinalEncoder` với `categories` cố định) | $\chi^2$ với từng nhãn | Giữ nếu $\chi^2 > 5.99$ ($\alpha = 0.05$, $df = 3 - 1 = 2$) |
-| **NOM** | `road_type`, `is_weekend`, `has_twoway` | `OneHotEncoder(handle_unknown="ignore", drop="if_binary")` | $\chi^2$ với từng nhãn, tính trên từng cột dummy | Giữ nếu $\chi^2 > 5.99$ |
+| **NOM** | `road_type`, `is_weekend`, `has_twoway`, `flood_prone` | `OneHotEncoder(handle_unknown="ignore", drop="if_binary")` | $\chi^2$ với từng nhãn, tính trên từng cột dummy | Giữ nếu $\chi^2 > 5.99$ |
 | **PCA (đối chứng)** | Các cột SỐ còn lại sau `VarianceThreshold` | `StandardScaler` | `PCA` giữ `95%` phương sai | **Nhánh riêng**, chỉ để so sánh. **Không** đưa vào mô hình cây chính hay SHAP |
 
 **Quy tắc bắt buộc của pipeline:**
@@ -215,3 +216,6 @@ df = df.sort_values(["timestamp", "node_id"]).reset_index(drop=True)
 | 3 | **Mâu thuẫn quy tắc Pearson:** [Đề cương dòng 128](../De_Cuong_Chi_Tiet_Do_An_May_Hoc_Nang_Cao.md#L128) ghi *"lọc các biến `\|r\| ≥ 0.5`"*, còn [Kế hoạch Tuần 4](../Ke_Hoach_Thuc_Hien_Tuan_4.md) ghi *"chỉ tham khảo, không lọc cứng"* | **Cả nhóm** (`[H5]`) | Theo Kế hoạch Tuần 4. Pearson chỉ đo quan hệ **tuyến tính**, trong khi tác động của mưa và triều là **phi tuyến** (theo chính Đề cương). Lọc cứng có thể loại mất `rain_mm_h` và `tide_level_m`, là hai biến trung tâm của đề tài và của phần giải thích SHAP. Báo cáo sẽ trình bày bảng Pearson như một phân tích, không dùng làm bộ lọc |
 | 4 | Ngưỡng nhãn `0.6 / 0.3` và `free_flow_kmh` mỗi nút trong mock | **Trung** + **Khang** | Như Mục III; điều chỉnh nếu tỉ lệ lớp `2` lệch khỏi khoảng `5–15%` |
 | 5 | Quy tắc lấy `road_type` cho nút có nhiều cấp đường | **Hôn** (`[H3]`) | Lấy cấp cao nhất (Mục IV.6) |
+| 6 | *(Tuần 6)* Giá trị `flood_prone` cho nhánh `METR-LA` (cao tốc Los Angeles, không có dữ liệu vùng ngập) | **Trung** (`[T1]`) + **Khang** | Gán `0` cho mọi cảm biến. Khi đó cột là hằng số nên pipeline tự loại ($\chi^2 = 0$), và hai nhánh vẫn dùng chung một schema |
+| 7 | *(Tuần 6)* Mục tiêu "giảm ≥ 40% số chiều" (Kế hoạch Tuần 5, `[K2]`) | **Cả nhóm** (`[H2]`) | Trên mock, chỉ nhánh PCA đạt (40,6%); tập giữ tên gốc `selected_compact` giảm 15,6%. Đề xuất báo cáo cả hai con số và **không** ép giảm thêm, vì muốn giảm thêm thì phải bỏ biến mưa/triều (trái Mục VII.3). Chạy lại khi có dữ liệu `[T1]` |
+| 8 | *(Tuần 6)* Cách đọc bảng xếp hạng Mutual Information | **Duy** (`[D2]`) + **Khang** | MI của `tide_level_m`, `humidity_pct`, `temperature_c` bị **thổi phồng** trên mock: các biến này chung cho cả 20 nút tại mỗi mốc, mà chuỗi chỉ dài 232 mốc (~2,4 ngày), nên mang luôn nhịp giờ cao điểm. **Không** dùng hạng MI để kết luận tác động của triều; kết luận dựa trên SHAP và kiểm tra lại với dữ liệu dài hơn |

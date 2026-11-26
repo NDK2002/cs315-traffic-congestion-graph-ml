@@ -1,4 +1,4 @@
-target,n_raw_features,n_encoded_features,n_selected,reduction_pct,pca_components_mean,folds
-y_t15,28,31,29,6.5,9.8,5
-y_t30,28,31,29,6.5,9.8,5
-y_t60,28,31,29,6.5,9.8,5
+target,n_raw_features,n_encoded_features,n_selected,reduction_pct,n_compact,reduction_compact_pct,pca_components_mean,n_pca_total_mean,reduction_pca_pct,folds
+y_t15,29,32,30,6.2,27,15.6,9.8,19.0,40.6,5
+y_t30,29,32,30,6.2,27,15.6,9.8,19.0,40.6,5
+y_t60,29,32,30,6.2,27,15.6,9.8,19.0,40.6,5
