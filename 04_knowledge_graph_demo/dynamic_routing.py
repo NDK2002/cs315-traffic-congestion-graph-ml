@@ -3,35 +3,39 @@ Dynamic Dijkstra Routing Engine on Traffic Knowledge Graph (CS315 - Nhom 14)
 Phu trach: Hoang Cao Son (25730061) - Lead WBS-03 ([S1] Tuan 6)
 
 Thuat toan Dynamic Dijkstra tinh trong so canh dong theo cong thuc:
-    w(u, v) = length_m * (1 + alpha * P(congestion_v) + beta * flood_factor(u, v))
+    w(u, v) = length_m * (1 + alpha * P(congestion_v) + beta * flood_indicator(u, v))
 
 Ho tro:
-- Doc truc tiep thuoc tinh `flood_prone` tu nodes.csv / edges.csv ([H1]) va
-  trang thai FloodHotspot trong Traffic KG (`traffic_kg_schema.py`).
-- Nhan xac suat ket xe P(y=2) tu mo hinh ML/ST-GNN hoac nhan 0/1/2.
-- Tra ve danh sach nut lo trinh toi uu, so sanh voi duong ngan nhat tinh,
-  danh sach diem ngap/ket da ne va ly do khuyen nghi (JSON-serializable cho AI Agent [S2]).
+- Dong bo duy nhat co `flood_prone` cua [H1] (nodes.csv / edges.csv) va trang thai
+  FloodHotspot trong Traffic KG (`traffic_kg_schema.py`).
+- Phat ngap phan tach giua doan duong ngap truc tiep (`edge.flood_prone`) va canh
+  khong ngap chi di vao nut ngap (`v`), tranh phat oan canh kho roi nut xuat phat `u`.
+- Nhan xac suat ket xe P(y=2) tu mo hinh ML/ST-GNN hoac nhan 0/1/2 (ho tro ca
+  `node_code`, `node_id` int va `str(node_id)`).
+- Khong mutate do thi `G` truyen vao; tra ve dict JSON-serializable gom lo trinh
+  toi uu, so sanh baseline, diem/doan ngap & ket da ne va ly do khuyen nghi cho [S2].
 """
 
 from __future__ import annotations
 
-import csv
-from pathlib import Path
+from itertools import islice
 from typing import Any
 
 import networkx as nx
 
 try:
     from .traffic_kg_schema import (
-        DEFAULT_DATA_DIR,
         _is_node_flooded,
+        _node_flood_hotspots,
+        _node_flood_severity,
         build_hang_xanh_kg,
         update_environment_state,
     )
 except ImportError:
     from traffic_kg_schema import (
-        DEFAULT_DATA_DIR,
         _is_node_flooded,
+        _node_flood_hotspots,
+        _node_flood_severity,
         build_hang_xanh_kg,
         update_environment_state,
     )
@@ -42,28 +46,7 @@ CONGESTION_LEVEL_TO_PROB = {
     2: 0.90,
 }
 
-
-def _load_csv_flood_flags(
-    nodes_csv: Path | str | None = None,
-    edges_csv: Path | str | None = None,
-) -> tuple[dict[str, bool], dict[str, bool]]:
-    """Doc co flood_prone tu nodes.csv va edges.csv cua [H1]."""
-    nodes_path = Path(nodes_csv) if nodes_csv else DEFAULT_DATA_DIR / "nodes.csv"
-    edges_path = Path(edges_csv) if edges_csv else DEFAULT_DATA_DIR / "edges.csv"
-
-    node_flood: dict[str, bool] = {}
-    with nodes_path.open("r", encoding="utf-8-sig") as f:
-        for row in csv.DictReader(f):
-            code = row["node_code"].strip()
-            node_flood[code] = str(row.get("flood_prone", "False")).strip().lower() == "true"
-
-    edge_flood: dict[str, bool] = {}
-    with edges_path.open("r", encoding="utf-8-sig") as f:
-        for row in csv.DictReader(f):
-            eid = row["edge_id"].strip()
-            edge_flood[eid] = str(row.get("flood_prone", "False")).strip().lower() == "true"
-
-    return node_flood, edge_flood
+_SEVERITY_RANK = {"normal": 0, "warning": 1, "critical": 2}
 
 
 def _normalize_node(G: nx.MultiDiGraph, node_ref: str | int) -> str:
@@ -83,6 +66,18 @@ def _normalize_node(G: nx.MultiDiGraph, node_ref: str | int) -> str:
     raise ValueError(f"Không tìm thấy nút giao hợp lệ: {node_ref}")
 
 
+def _lookup_node_value(mapping: dict[Any, Any], node_code: str, node_id: int) -> tuple[bool, Any]:
+    """Tra cuu gia tri trong dict ho tro dong bo key node_code, int node_id va str(node_id)."""
+    if node_code in mapping:
+        return True, mapping[node_code]
+    if node_id in mapping:
+        return True, mapping[node_id]
+    node_id_str = str(node_id)
+    if node_id_str in mapping:
+        return True, mapping[node_id_str]
+    return False, None
+
+
 def _resolve_congestion_probs(
     G: nx.MultiDiGraph,
     weather_cond: dict[str, Any],
@@ -99,28 +94,21 @@ def _resolve_congestion_probs(
             continue
         node_id = attrs["node_id"]
 
-        if node_code in prob_input:
-            p = float(prob_input[node_code])
-        elif node_id in prob_input:
-            p = float(prob_input[node_id])
-        elif str(node_id) in prob_input:
-            p = float(prob_input[str(node_id)])
-        elif node_code in level_input:
-            lvl = int(level_input[node_code])
-            p = CONGESTION_LEVEL_TO_PROB.get(lvl, 0.05)
-        elif node_id in level_input:
-            lvl = int(level_input[node_id])
-            p = CONGESTION_LEVEL_TO_PROB.get(lvl, 0.05)
+        has_prob, raw_prob = _lookup_node_value(prob_input, node_code, node_id)
+        has_lvl, raw_lvl = _lookup_node_value(level_input, node_code, node_id)
+
+        if has_prob:
+            p = float(raw_prob)
+        elif has_lvl:
+            p = CONGESTION_LEVEL_TO_PROB.get(int(raw_lvl), 0.05)
         else:
             p = 0.0
 
         p = max(0.0, min(1.0, p))
         probs[node_code] = p
 
-        if node_code in level_input:
-            levels[node_code] = int(level_input[node_code])
-        elif node_id in level_input:
-            levels[node_code] = int(level_input[node_id])
+        if has_lvl:
+            levels[node_code] = int(raw_lvl)
         elif p >= 0.65:
             levels[node_code] = 2
         elif p >= 0.30:
@@ -131,10 +119,82 @@ def _resolve_congestion_probs(
     return probs, levels
 
 
+def _default_weather_severity(rain_mm_h: float, tide_level_m: float) -> str:
+    """Muc do ngap mac dinh khi do thi tuy bien khong co nut FloodHotspot."""
+    heavy = rain_mm_h > 30.0
+    combo = rain_mm_h > 15.0 and tide_level_m >= 1.50
+    if heavy and tide_level_m >= 1.50:
+        return "critical"
+    if heavy or combo:
+        return "warning"
+    return "normal"
+
+
+def _resolve_node_flood_state(
+    G: nx.MultiDiGraph,
+    node_code: str,
+    rain_mm_h: float,
+    tide_level_m: float,
+) -> tuple[bool, bool, str, list[str]]:
+    """Tra ve (is_flood_prone, is_flood_active, severity, active_hotspot_names) tu KG."""
+    attrs = G.nodes[node_code]
+    hotspot_ids = _node_flood_hotspots(G, node_code)
+    is_prone = bool(attrs.get("flood_prone", False)) or bool(hotspot_ids)
+
+    if hotspot_ids:
+        active_names = _is_node_flooded(G, node_code)
+        severity = _node_flood_severity(G, node_code)
+        return is_prone, bool(active_names), severity, active_names
+
+    if is_prone:
+        severity = _default_weather_severity(rain_mm_h, tide_level_m)
+        return True, severity != "normal", severity, []
+
+    return False, False, "normal", []
+
+
+def _resolve_edge_flood_state(
+    G: nx.MultiDiGraph,
+    u: str,
+    v: str,
+    data: dict[str, Any],
+    rain_mm_h: float,
+    tide_level_m: float,
+) -> tuple[bool, str, list[str]]:
+    """Xac dinh muc do ngap cua chinh doan duong (u -> v) theo co flood_prone va FloodHotspot."""
+    if not data.get("flood_prone", False):
+        return False, "normal", []
+
+    road_name = str(data.get("road_name", ""))
+    matched_hs: list[str] = []
+    for node_id, attrs in G.nodes(data=True):
+        if attrs.get("node_type") != "FloodHotspot":
+            continue
+        keywords = attrs.get("road_keywords") or []
+        if any(kw in road_name for kw in keywords):
+            matched_hs.append(node_id)
+
+    if not matched_hs:
+        matched_hs = list(dict.fromkeys(_node_flood_hotspots(G, v) + _node_flood_hotspots(G, u)))
+
+    if matched_hs:
+        best = "normal"
+        active_names: list[str] = []
+        for hs_id in matched_hs:
+            hs_attrs = G.nodes[hs_id]
+            sev = hs_attrs.get("severity", "normal")
+            if _SEVERITY_RANK.get(sev, 0) > _SEVERITY_RANK[best]:
+                best = sev
+            if hs_attrs.get("is_flooded", False):
+                active_names.append(hs_attrs["name"])
+        return best != "normal", best, active_names
+
+    severity = _default_weather_severity(rain_mm_h, tide_level_m)
+    return severity != "normal", severity, []
+
+
 def _build_dynamic_routing_graph(
     G: nx.MultiDiGraph,
-    node_flood_flags: dict[str, bool],
-    edge_flood_flags: dict[str, bool],
     congestion_probs: dict[str, float],
     rain_mm_h: float,
     tide_level_m: float,
@@ -143,20 +203,20 @@ def _build_dynamic_routing_graph(
 ) -> nx.DiGraph:
     """Tao DiGraph voi trong so canh dong w = length * (1 + alpha*P(ket) + beta*flood)."""
     R = nx.DiGraph()
-    is_flood_weather = rain_mm_h > 30.0 or (rain_mm_h > 15.0 and tide_level_m >= 1.50)
-    is_critical_flood = rain_mm_h > 30.0 and tide_level_m >= 1.50
 
     for node_code, attrs in G.nodes(data=True):
         if attrs.get("node_type") != "Intersection":
             continue
-        kg_floods = _is_node_flooded(G, node_code)
-        csv_flood = node_flood_flags.get(node_code, False) and is_flood_weather
+        is_prone, is_active, severity, active_hotspots = _resolve_node_flood_state(
+            G, node_code, rain_mm_h, tide_level_m
+        )
         R.add_node(
             node_code,
             **attrs,
-            is_flood_prone=node_flood_flags.get(node_code, False) or bool(kg_floods),
-            is_flood_active=bool(kg_floods) or csv_flood,
-            flood_hotspot_names=kg_floods,
+            is_flood_prone=is_prone,
+            is_flood_active=is_active,
+            flood_severity=severity,
+            flood_hotspot_names=active_hotspots,
             p_congestion=congestion_probs.get(node_code, 0.0),
         )
 
@@ -164,25 +224,28 @@ def _build_dynamic_routing_graph(
         if data.get("rel_type") != "CONNECTS_TO":
             continue
 
-        edge_id = data["edge_id"]
         length_m = float(data["length_m"])
         p_ket = congestion_probs.get(v, 0.0)
 
-        edge_is_flood_prone = (
-            edge_flood_flags.get(edge_id, False)
-            or R.nodes[u]["is_flood_prone"]
-            or R.nodes[v]["is_flood_prone"]
+        edge_flood_prone = bool(data.get("flood_prone", False))
+        edge_flood_active, edge_severity, edge_hotspots = _resolve_edge_flood_state(
+            G, u, v, data, rain_mm_h, tide_level_m
         )
-        edge_is_flood_active = (
-            (edge_flood_flags.get(edge_id, False) and is_flood_weather)
-            or R.nodes[u]["is_flood_active"]
-            or R.nodes[v]["is_flood_active"]
-        )
+        v_flood_prone = R.nodes[v]["is_flood_prone"]
+        v_severity = R.nodes[v]["flood_severity"]
 
-        if edge_is_flood_active:
-            flood_indicator = 1.5 if is_critical_flood else 1.0
-        elif edge_is_flood_prone and rain_mm_h > 15.0:
+        # Phat cao cho doan duong truc tiep ngap (edge.flood_prone); canh kho di vao
+        # nut ngap `v` chi chiu he so tiep can nhe va KHONG phat oan canh kho roi `u`.
+        if edge_flood_active:
+            flood_indicator = 1.5 if edge_severity == "critical" else 1.0
+        elif edge_flood_prone and rain_mm_h > 15.0:
             flood_indicator = 0.25
+        elif v_severity == "critical":
+            flood_indicator = 0.35
+        elif v_severity == "warning":
+            flood_indicator = 0.25
+        elif v_flood_prone and rain_mm_h > 15.0:
+            flood_indicator = 0.10
         else:
             flood_indicator = 0.0
 
@@ -191,8 +254,10 @@ def _build_dynamic_routing_graph(
         edge_payload = {
             **data,
             "p_congestion": round(p_ket, 4),
-            "is_flood_prone": edge_is_flood_prone,
-            "is_flood_active": edge_is_flood_active,
+            "is_flood_prone": edge_flood_prone,
+            "is_flood_active": edge_flood_active,
+            "flood_severity": edge_severity,
+            "flood_hotspot_names": edge_hotspots,
             "flood_indicator": flood_indicator,
             "dynamic_weight": round(dynamic_weight, 2),
         }
@@ -204,12 +269,13 @@ def _build_dynamic_routing_graph(
 
 
 def _summarize_path(R: nx.DiGraph, path: list[str]) -> dict[str, Any]:
-    """Tong hop chi tiet lo trinh: chang, do dai, trong so dong, diem ngap va ket."""
+    """Tong hop chi tiet lo trinh: chang, do dai, trong so dong, diem/doan ngap va ket."""
     segments: list[dict[str, Any]] = []
     total_length_m = 0.0
     total_weight = 0.0
     total_base_time_s = 0.0
     flood_points: list[str] = []
+    flood_edges: list[dict[str, str]] = []
     flood_hotspot_names: set[str] = set()
     congested_nodes: list[dict[str, Any]] = []
 
@@ -235,6 +301,17 @@ def _summarize_path(R: nx.DiGraph, path: list[str]) -> dict[str, Any]:
         total_length_m += e["length_m"]
         total_weight += e["dynamic_weight"]
         total_base_time_s += e["base_time_s"]
+        if e.get("is_flood_active"):
+            flood_edges.append(
+                {
+                    "edge_id": e["edge_id"],
+                    "from": u,
+                    "to": v,
+                    "road_name": e["road_name"],
+                }
+            )
+            for hs_name in e.get("flood_hotspot_names", []):
+                flood_hotspot_names.add(hs_name)
         segments.append(
             {
                 "edge_id": e["edge_id"],
@@ -255,6 +332,7 @@ def _summarize_path(R: nx.DiGraph, path: list[str]) -> dict[str, Any]:
         "total_dynamic_weight": round(total_weight, 1),
         "base_time_s": round(total_base_time_s, 1),
         "flood_points": flood_points,
+        "flood_edges": flood_edges,
         "flood_hotspots": sorted(flood_hotspot_names),
         "congested_nodes": congested_nodes,
     }
@@ -270,7 +348,7 @@ def _build_reason(
 ) -> str:
     """Sinh cau giai thich tu nhien bang tieng Viet cho AI Agent va nguoi dung."""
     if optimal["nodes"] == baseline["nodes"]:
-        if not optimal["flood_points"] and not optimal["congested_nodes"]:
+        if not optimal["flood_points"] and not optimal["flood_edges"] and not optimal["congested_nodes"]:
             return (
                 f"Thời tiết ổn định (mưa {rain_mm_h:.1f} mm/h, triều {tide_level_m:.2f} m). "
                 "Lộ trình tối ưu trùng với đường ngắn nhất tĩnh và không gặp điểm ngập/kẹt."
@@ -286,7 +364,7 @@ def _build_reason(
     )
     details: list[str] = []
     if avoided_floods:
-        details.append(f"né được điểm ngập {', '.join(avoided_floods)}")
+        details.append(f"né được vùng ngập {', '.join(avoided_floods)}")
     if avoided_congestion:
         details.append(f"tránh nút kẹt nặng {', '.join(avoided_congestion)}")
 
@@ -322,18 +400,19 @@ def find_optimal_route(
         alpha: He so phat xac suat ket xe P(ket).
         beta: He so phat vung trung ngap (flood_prone).
         top_k: So luong phuong an lo trinh toi da tra ve.
-        G: Traffic KG da khoi tao (neu None se tu build tu CSV).
+        G: Traffic KG da khoi tao (neu None se tu build tu CSV; khong bi mutate).
 
     Returns:
         Dict chua danh sach nut lo trinh toi uu, thong so tung chang,
-        so sanh baseline, diem ngap/ket da ne va ly do chon lo trinh.
+        so sanh baseline, diem/doan ngap & ket da ne va ly do chon lo trinh.
     """
     cond = weather_cond or {}
     rain_mm_h = float(cond.get("rain_mm_h", 0.0))
     tide_level_m = float(cond.get("tide_level_m", 1.0))
     timestamp = str(cond.get("timestamp", "2026-11-26T17:00:00+07:00"))
 
-    kg = G if G is not None else build_hang_xanh_kg()
+    # Copy KG khi truyen tu ben ngoai de tranh lam thay doi trang thai cua caller
+    kg = G.copy() if G is not None else build_hang_xanh_kg()
     origin = _normalize_node(kg, start)
     destination = _normalize_node(kg, end)
 
@@ -346,11 +425,8 @@ def find_optimal_route(
         timestamp=timestamp,
     )
 
-    node_flood_flags, edge_flood_flags = _load_csv_flood_flags()
     R = _build_dynamic_routing_graph(
         kg,
-        node_flood_flags=node_flood_flags,
-        edge_flood_flags=edge_flood_flags,
         congestion_probs=congestion_probs,
         rain_mm_h=rain_mm_h,
         tide_level_m=tide_level_m,
@@ -362,16 +438,27 @@ def find_optimal_route(
         raise nx.NetworkXNoPath(f"Không có đường đi hợp lệ từ {origin} đến {destination}")
 
     baseline_path = nx.dijkstra_path(R, origin, destination, weight="length_m")
-    dynamic_paths = list(nx.shortest_simple_paths(R, origin, destination, weight="dynamic_weight"))[: max(1, top_k)]
+    dynamic_paths = list(
+        islice(nx.shortest_simple_paths(R, origin, destination, weight="dynamic_weight"), max(1, top_k))
+    )
 
     baseline_summary = _summarize_path(R, baseline_path)
     optimal_summary = _summarize_path(R, dynamic_paths[0])
     alternatives = [_summarize_path(R, p) for p in dynamic_paths[1:]]
 
     optimal_node_set = set(optimal_summary["nodes"])
-    avoided_floods = [
+    optimal_edge_ids = {seg["edge_id"] for seg in optimal_summary["segments"]}
+
+    avoided_flood_nodes = [
         fp for fp in baseline_summary["flood_points"] if fp.split(" ")[0] not in optimal_node_set
     ]
+    avoided_flood_edges = [
+        f"đoạn {fe['road_name']} ({fe['from']}->{fe['to']}, {fe['edge_id']})"
+        for fe in baseline_summary["flood_edges"]
+        if fe["edge_id"] not in optimal_edge_ids
+    ]
+    avoided_floods = avoided_flood_nodes + avoided_flood_edges
+
     avoided_congestion = [
         f"{cn['node_code']} ({cn['road']})"
         for cn in baseline_summary["congested_nodes"]
@@ -426,7 +513,19 @@ if __name__ == "__main__":
     print("  Optimal :", " -> ".join(res_clear["optimal_route"]["nodes"]), f"| {res_clear['optimal_route']['total_length_m']}m")
     print("  Lý do   :", res_clear["reason"])
 
-    # Kich ban 2: Mua lon 42 mm/h + trieu 1.55 m + Nga tu Hang Xanh (HX_01) ket & ngap -> ne qua Cau vuot Hang Xanh
+    # Kich ban 2: Mua lon 42 mm/h + trieu 1.55 m (KHONG can input tac nghen) -> tu dong ne doan ngap Dinh Bo Linh (E_13)
+    res_flood = find_optimal_route(
+        start="HX_06",
+        end="HX_16",
+        weather_cond={"rain_mm_h": 42.0, "tide_level_m": 1.55},
+    )
+    print("\n[Kịch bản 2] Mưa lớn 42 mm/h + Triều 1.55 m, né đoạn ngập Đinh Bộ Lĩnh (HX_06 -> HX_16):")
+    print("  Baseline:", " -> ".join(res_flood["baseline_shortest_route"]["nodes"]), f"| {res_flood['baseline_shortest_route']['total_length_m']}m")
+    print("  Optimal :", " -> ".join(res_flood["optimal_route"]["nodes"]), f"| {res_flood['optimal_route']['total_length_m']}m")
+    print("  Né ngập :", res_flood["avoided_flood_zones"])
+    print("  Lý do   :", res_flood["reason"])
+
+    # Kich ban 3: Mua lon 42 mm/h + trieu 1.55 m + Nga tu Hang Xanh (HX_01) ket nang -> ne qua Cau vuot Hang Xanh
     res_storm = find_optimal_route(
         start="HX_03",
         end="HX_15",
@@ -444,7 +543,7 @@ if __name__ == "__main__":
             },
         },
     )
-    print("\n[Kịch bản 2] Mưa lớn 42 mm/h + Triều 1.55 m (HX_03 -> HX_15):")
+    print("\n[Kịch bản 3] Mưa lớn 42 mm/h + Triều 1.55 m + HX_01 kẹt nặng (HX_03 -> HX_15):")
     print("  Baseline:", " -> ".join(res_storm["baseline_shortest_route"]["nodes"]), f"| {res_storm['baseline_shortest_route']['total_length_m']}m")
     print("  Optimal :", " -> ".join(res_storm["optimal_route"]["nodes"]), f"| {res_storm['optimal_route']['total_length_m']}m")
     print("  Né ngập :", res_storm["avoided_flood_zones"])
