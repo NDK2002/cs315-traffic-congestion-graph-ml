@@ -3,8 +3,9 @@ Traffic Knowledge Graph Schema & Prototype (CS315 - Nhom 14)
 Phu trach: Hoang Cao Son (25730061) - Lead WBS-03
 
 Module dung do thi tri thuc (NetworkX MultiDiGraph) cho cum giao thong Hang Xanh
-tu nodes.csv (HX_01..HX_20) va edges.csv (E_01..E_37), mo hinh hoa diem ngap
-Binh Thanh, trang thai thoi tiet/trieu cuong va truy van lo trinh ne ket.
+tu nodes.csv (HX_01..HX_20) va edges.csv (E_01..E_38), mo hinh hoa diem ngap
+Binh Thanh (dong bo co flood_prone cua [H1]), trang thai thoi tiet/trieu cuong va
+truy van lo trinh ne ket.
 """
 
 from __future__ import annotations
@@ -78,7 +79,9 @@ def build_hang_xanh_kg(
     id_to_code: dict[int, str] = {}
 
     with nodes_path.open("r", encoding="utf-8-sig") as f:
-        for row in csv.DictReader(f):
+        node_reader = csv.DictReader(f)
+        has_node_flood_col = "flood_prone" in (node_reader.fieldnames or [])
+        for row in node_reader:
             node_id = int(row["node_id"])
             node_code = row["node_code"].strip()
             id_to_code[node_id] = node_code
@@ -93,6 +96,7 @@ def build_hang_xanh_kg(
                 highway_classes=row["highway_classes"].strip(),
                 in_degree=int(row["in_degree"]),
                 out_degree=int(row["out_degree"]),
+                flood_prone=_parse_bool(row.get("flood_prone", "False")),
                 congestion_level=0,
                 congestion_label=CONGESTION_LABELS[0],
             )
@@ -116,6 +120,7 @@ def build_hang_xanh_kg(
                 length_m=length_m,
                 oneway=_parse_bool(row["oneway"]),
                 maxspeed_kmh=maxspeed_kmh,
+                flood_prone=_parse_bool(row.get("flood_prone", "False")),
                 base_time_s=round(base_time_s, 2),
                 effective_cost=round(base_time_s, 2),
             )
@@ -140,6 +145,7 @@ def build_hang_xanh_kg(
             node_type="FloodHotspot",
             hotspot_id=hs_id,
             name=hs["name"],
+            road_keywords=list(hs["road_keywords"]),
             rain_threshold_mm_h=hs["rain_threshold_mm_h"],
             tide_threshold_m=hs["tide_threshold_m"],
             is_flooded=False,
@@ -155,6 +161,9 @@ def build_hang_xanh_kg(
         for node_code, attrs in G.nodes(data=True):
             if attrs.get("node_type") != "Intersection":
                 continue
+            # Dung co flood_prone cua [H1] (nodes.csv) lam nguon chuan duy nhat khi co mat
+            if has_node_flood_col and not attrs.get("flood_prone", False):
+                continue
             if any(kw in attrs.get("roads", "") for kw in hs["road_keywords"]):
                 G.add_edge(
                     node_code,
@@ -167,15 +176,34 @@ def build_hang_xanh_kg(
     return G
 
 
+def _node_flood_hotspots(G: nx.MultiDiGraph, node_code: str) -> list[str]:
+    """Tra ve danh sach hotspot_id lien ket PRONE_TO_FLOOD voi nut giao (tinh)."""
+    return [
+        target
+        for _, target, data in G.out_edges(node_code, data=True)
+        if data.get("rel_type") == "PRONE_TO_FLOOD"
+    ]
+
+
 def _is_node_flooded(G: nx.MultiDiGraph, node_code: str) -> list[str]:
     """Tra ve danh sach ten diem ngap dang kich hoat tai nut giao."""
     flooded_names: list[str] = []
-    for _, target, data in G.out_edges(node_code, data=True):
-        if data.get("rel_type") == "PRONE_TO_FLOOD":
-            hs_attrs = G.nodes[target]
-            if hs_attrs.get("is_flooded", False):
-                flooded_names.append(hs_attrs["name"])
+    for target in _node_flood_hotspots(G, node_code):
+        hs_attrs = G.nodes[target]
+        if hs_attrs.get("is_flooded", False):
+            flooded_names.append(hs_attrs["name"])
     return flooded_names
+
+
+def _node_flood_severity(G: nx.MultiDiGraph, node_code: str) -> str:
+    """Tra ve muc do ngap cao nhat ('critical' > 'warning' > 'normal') tai nut giao."""
+    severity_rank = {"normal": 0, "warning": 1, "critical": 2}
+    best = "normal"
+    for target in _node_flood_hotspots(G, node_code):
+        sev = G.nodes[target].get("severity", "normal")
+        if severity_rank.get(sev, 0) > severity_rank[best]:
+            best = sev
+    return best
 
 
 def update_environment_state(
@@ -232,7 +260,12 @@ def update_environment_state(
         v_lvl = G.nodes[v].get("congestion_level", 0)
         u_flooded = bool(_is_node_flooded(G, u))
         v_flooded = bool(_is_node_flooded(G, v))
-        flood_factor = 4.5 if (u_flooded or v_flooded) else 1.0
+        if data.get("flood_prone", False) and (u_flooded or v_flooded):
+            flood_factor = 4.5
+        elif v_flooded:
+            flood_factor = 2.0
+        else:
+            flood_factor = 1.0
         congestion_factor = CONGESTION_PENALTY.get(v_lvl, 1.0)
         data["effective_cost"] = round(data["base_time_s"] * congestion_factor * flood_factor, 2)
 
